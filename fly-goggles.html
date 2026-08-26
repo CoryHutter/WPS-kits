@@ -463,7 +463,18 @@ document.addEventListener('click',async e=>{
       const c=await html2canvas(box,{scale:1080/box.offsetWidth,backgroundColor:null,logging:false,useCORS:true});
       const a=document.createElement('a');
       a.download=`${POSTS[i].code}-${val('shop').replace(/[^A-Za-z0-9]/g,'')}.png`;
-      a.href=c.toDataURL('image/png');a.click();flash(b,'Saved');
+     const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+const file=new File([blob],a.download,{type:'image/png'});
+if(navigator.canShare&&navigator.canShare({files:[file]})){
+  try{await navigator.share({files:[file]});flash(b,'Saved');}
+  catch(err){flash(b,'Save image');}
+  return;
+}
+const url=URL.createObjectURL(blob);
+a.href=url;a.click();
+setTimeout(()=>URL.revokeObjectURL(url),1000);
+flash(b,'Saved');
+
     }catch(err){flash(b,'Screenshot it');}
   }
 });

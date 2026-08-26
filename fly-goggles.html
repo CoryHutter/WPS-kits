@@ -105,12 +105,17 @@
 
   footer{margin-top:64px;padding-top:22px;border-top:1px solid #2b3238;font-size:13px;color:#8d979d}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* --- contact info lives in the caption, not on the graphic --- */
+  .tok-shop,.tok-city,.tok-phone{display:none!important}
+  .t-foot{justify-content:flex-end}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
+  <a href="index.html" style="display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--alum-2);text-decoration:none;padding:6px 0;margin-bottom:6px">&larr; All dealer kits</a>
   <div class="eyebrow">Dealer Social Kit · Kit 02 · Phase 3 of 3 · 8 posts</div>
   <h1>Fly Racing<br><em>Goggles</em></h1>
   <p class="lede">Eight ready-to-post graphics and captions for the goggle lineup. Put your shop name in below, then save the image and copy the caption.</p>
@@ -212,7 +217,7 @@ Polycarbonate lens with anti-fog and anti-scratch coatings, a lightweight polyur
 In stock now in adult and youth. Come pick a pair — and grab a spare lens while you're at it.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#flyracing #goggles #motocross #mxgear #dirtbike #ridefly #offroad #newgear #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #goggles #motocross #{CITYTAG} #powersportsdealer`
   },
   {
     code:"GOG-02", name:"Colorways", when:"Browse day",
@@ -229,7 +234,7 @@ In stock now in adult and youth. Come pick a pair — and grab a spare lens whil
     caption:`Loud, clean, or blacked out. There's a pair for every kind of rider.
 
 Comment which one you'd run and we'll tell you what's on the board right now. Adult and youth sizes, with replacement lenses and tear-offs to match.`,
-    tags:`#flyracing #goggles #mxgear #motocross #dirtbike #whichone #ridefly #offroad #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #goggles #mxgear #{CITYTAG} #powersportsdealer`
   },
   {
     code:"GOG-03", name:"Spec sheet", when:"Saves post",
@@ -263,7 +268,7 @@ Comment which one you'd run and we'll tell you what's on the board right now. Ad
 · Adult and youth sizes, with optional lens colors and accessories
 
 On the board now.`,
-    tags:`#flyracing #goggles #mxgear #motocross #antifog #dirtbike #offroad #ridefly #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #goggles #mxgear #{CITYTAG} #powersportsdealer`
   },
   {
     code:"GOG-04", name:"Lens tints", when:"Highest saves",
@@ -293,7 +298,7 @@ Woods, dawn, or dusk — clear. A dark lens in the trees will have you riding bl
 The Fly frame takes a quick-change lens, so swapping is a thirty-second job in the truck. Keep a second lens in the goggle bag and you're covered for whatever the day turns into.
 
 Come see what tints we've got on the shelf.`,
-    tags:`#flyracing #goggles #lens #motocross #ridingtips #dirtbike #offroad #trailriding #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #goggles #lens #{CITYTAG} #powersportsdealer`
   },
   {
     code:"GOG-05", name:"Tear-offs", when:"Before a wet weekend",
@@ -315,7 +320,7 @@ Fly goggles come with the tear-off posts already installed, so you're not modify
 We stock the goggles, the tear-offs, and the replacement lenses. Grab all three at once and stop borrowing from your buddy.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#flyracing #tearoffs #goggles #motocross #mudday #dirtbike #raceday #mxgear #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #tearoffs #goggles #{CITYTAG} #powersportsdealer`
   },
   {
     code:"GOG-06", name:"Youth", when:"Weekend",
@@ -335,7 +340,7 @@ We stock the goggles, the tear-offs, and the replacement lenses. Grab all three 
 Youth goggles are sized for a youth helmet, not just a smaller strap on an adult frame. Same anti-fog coated lens and three-layer foam as the adult version.
 
 Bring the helmet in with you and we'll make sure the pair you leave with actually seals against it.`,
-    tags:`#youthmx #dirtbikekids #flyracing #goggles #motocrossfamily #minibike #ridesafe #{CITYTAG} #powersportsdealer #youthgear`
+    tags:`#youthmx #dirtbikekids #flyracing #{CITYTAG} #powersportsdealer`
   },
   {
     code:"GOG-07", name:"Field of view", when:"Upgrade case",
@@ -357,7 +362,7 @@ A narrow frame puts a black border in the corner of your eye. You stop noticing 
 Add a lens that doesn't fog when you're stopped and doesn't scratch the first time it goes in the gear bag, and it stops being a $20-versus-$60 argument.
 
 On the board now in adult and youth.`,
-    tags:`#flyracing #goggles #motocross #fieldofview #dirtbike #ridesafe #offroad #mxgear #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #goggles #motocross #{CITYTAG} #powersportsdealer`
   },
   {
     code:"GOG-08", name:"Sand goggle", when:"Before a dune trip",
@@ -385,7 +390,7 @@ Everything else you'd expect is still there — polycarbonate lens with anti-fog
 Heading to the dunes? Grab a pair before you load up, not after.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#flyracing #sandgoggle #dunes #sanddunes #utv #sidebyside #atv #duneseason #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #sandgoggle #dunes #{CITYTAG} #powersportsdealer`
   }
 ];
 
@@ -426,7 +431,10 @@ document.getElementById('stories').innerHTML=STORIES.map((s,i)=>`
 
 function render(){
   POSTS.forEach((p,i)=>{
-    document.getElementById('cap'+i).textContent=fill(p.caption);
+    let _t=fill(p.caption).trimEnd();
+    const _c=[val('shop'),val('city'),val('phone')].filter(Boolean).join(' · ');
+    if(_c && !_t.endsWith(_c)) _t += '\n\n' + _c;
+    document.getElementById('cap'+i).textContent=_t;
     document.getElementById('tag'+i).textContent=fill(p.tags);
   });
   STORIES.forEach((s,i)=>{document.getElementById('scap'+i).textContent=fill(s.cap);});

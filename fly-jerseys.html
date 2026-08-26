@@ -102,12 +102,17 @@
 
   footer{margin-top:64px;padding-top:22px;border-top:1px solid #2b3238;font-size:13px;color:#8d979d}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* --- contact info lives in the caption, not on the graphic --- */
+  .tok-shop,.tok-city,.tok-phone{display:none!important}
+  .t-foot{justify-content:flex-end}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
+  <a href="index.html" style="display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--alum-2);text-decoration:none;padding:6px 0;margin-bottom:6px">&larr; All dealer kits</a>
   <div class="eyebrow">Dealer Social Kit · Kit 02 · Phase 2 of 3 · 6 posts</div>
   <h1>Fly Racing<br><em>Jerseys</em></h1>
   <p class="lede">Six ready-to-post graphics and captions for the jersey lineup — and the matching pants and gloves that go with them. Put your shop name in below, then save the image and copy the caption.</p>
@@ -205,7 +210,7 @@ Lightweight polyester, tag-less collar, and an extended tail that actually stays
 In stock now in youth and adult sizes. Come see it in person — photos never do the colors justice.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#flyracing #motocross #mxgear #dirtbike #ridefly #newgear #offroad #{CITYTAG} #powersportsdealer #gearup`
+    tags:`#flyracing #motocross #mxgear #{CITYTAG} #powersportsdealer`
   },
   {
     code:"JER-02", name:"Full kit", when:"Sells three pieces",
@@ -227,7 +232,7 @@ Every jersey we've got on the rack has the pants and gloves to go with it, in th
 In stock now in youth and adult sizes.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#flyracing #mxgear #gearset #motocross #dirtbike #ridefly #atv #offroad #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #mxgear #gearset #{CITYTAG} #powersportsdealer`
   },
   {
     code:"JER-03", name:"Colorways", when:"Browse day",
@@ -248,7 +253,7 @@ In stock now in youth and adult sizes.
 Comment the color you'd ride and we'll tell you what we've got in your size on the shelf right now. Matching pants and gloves available for all of them.
 
 Youth and adult.`,
-    tags:`#flyracing #mxgear #motocross #dirtbike #whichone #ridefly #offroad #atv #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #mxgear #motocross #{CITYTAG} #powersportsdealer`
   },
   {
     code:"JER-04", name:"Built for riding", when:"Explainer",
@@ -279,7 +284,7 @@ The details that matter once you're an hour in:
 · Standard fit — not skin tight, not flapping in the wind
 
 It's a small upgrade that you notice every single ride.`,
-    tags:`#flyracing #mxgear #motocross #dirtbike #ridingtips #offroad #atvlife #ridefly #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #mxgear #motocross #{CITYTAG} #powersportsdealer`
   },
   {
     code:"JER-05", name:"Youth", when:"Weekend",
@@ -300,7 +305,7 @@ Full youth jersey lineup in stock, with matching pants and gloves. Let them pick
 Same construction as the adult gear — tag-less collar, extended tail, and a polyester that survives the washing machine as often as you'll be running it.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#youthmx #dirtbikekids #flyracing #motocrossfamily #mxgear #minibike #ridefly #{CITYTAG} #powersportsdealer #youthgear`
+    tags:`#youthmx #dirtbikekids #flyracing #{CITYTAG} #powersportsdealer`
   },
   {
     code:"JER-06", name:"Fit", when:"Foot traffic",
@@ -321,7 +326,7 @@ Too tight and it pulls every time you reach for the bars. Too loose and it catch
 Stop in and try one on over what you actually ride in, roost guard and all. Takes two minutes and beats guessing at a size chart.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#flyracing #mxgear #jerseyfit #motocross #dirtbike #shoplocal #offroad #ridefly #{CITYTAG} #powersportsdealer`
+    tags:`#flyracing #mxgear #jerseyfit #{CITYTAG} #powersportsdealer`
   }
 ];
 
@@ -362,7 +367,10 @@ document.getElementById('stories').innerHTML=STORIES.map((s,i)=>`
 
 function render(){
   POSTS.forEach((p,i)=>{
-    document.getElementById('cap'+i).textContent=fill(p.caption);
+    let _t=fill(p.caption).trimEnd();
+    const _c=[val('shop'),val('city'),val('phone')].filter(Boolean).join(' · ');
+    if(_c && !_t.endsWith(_c)) _t += '\n\n' + _c;
+    document.getElementById('cap'+i).textContent=_t;
     document.getElementById('tag'+i).textContent=fill(p.tags);
   });
   STORIES.forEach((s,i)=>{document.getElementById('scap'+i).textContent=fill(s.cap);});

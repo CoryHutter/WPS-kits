@@ -105,12 +105,17 @@
 
   footer{margin-top:64px;padding-top:22px;border-top:1px solid #2b3238;font-size:13px;color:#8d979d}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* --- contact info lives in the caption, not on the graphic --- */
+  .tok-shop,.tok-city,.tok-phone{display:none!important}
+  .t-foot{justify-content:flex-end}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
+  <a href="index.html" style="display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--alum-2);text-decoration:none;padding:6px 0;margin-bottom:6px">&larr; All dealer kits</a>
   <div class="eyebrow">Dealer Social Kit · Kit 03 · Pre-launch · 6 posts</div>
   <h1>Cardo<br><em>Venture</em></h1>
   <p class="lede">A build-up campaign for the Venture launch — the first off-road helmet with Mesh comms and JBL sound built into it. Put your shop name in below, then save the image and copy the caption.</p>
@@ -206,7 +211,7 @@ The Cardo Venture is the world's first off-road helmet designed with fully integ
 We'll be carrying it. Comment below or give us a call and we'll put you on the list to hear the second it lands.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#cardo #cardosystems #cardoventure #meshcomms #enduro #offroad #adventureriding #dualsport #{CITYTAG} #powersportsdealer`
+    tags:`#cardo #cardosystems #cardoventure #{CITYTAG} #powersportsdealer`
   },
   {
     code:"CV-02", name:"Sound by JBL", when:"3 weeks out",
@@ -227,7 +232,7 @@ The Cardo Venture runs 40mm speakers with sound by JBL, built into the helmet in
 Coming soon. Comment or call and we'll add you to the list.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#cardo #cardoventure #jbl #meshcomms #enduro #advrider #dualsport #offroad #{CITYTAG} #powersportsdealer`
+    tags:`#cardo #cardoventure #jbl #{CITYTAG} #powersportsdealer`
   },
   {
     code:"CV-03", name:"Safety", when:"2 weeks out",
@@ -262,7 +267,7 @@ Here's the Cardo Venture's answer.
 It's a serious helmet that happens to have the comms built in, not the other way around.
 
 Coming soon.`,
-    tags:`#cardoventure #cardo #leatt #ece2206 #helmetsafety #enduro #offroad #advrider #{CITYTAG} #powersportsdealer`
+    tags:`#cardoventure #cardo #leatt #{CITYTAG} #powersportsdealer`
   },
   {
     code:"CV-04", name:"15 riders", when:"2 weeks out",
@@ -288,7 +293,7 @@ The Cardo Venture runs 2nd generation Dynamic Mesh Communication — up to 15 ri
 Natural voice operation means you just talk. And it connects with other major brands, so the guy running a different unit isn't left out.
 
 Coming soon. Comment to get on the list.`,
-    tags:`#cardo #cardoventure #dmc #meshcomms #groupride #enduro #advrider #dualsport #{CITYTAG} #powersportsdealer`
+    tags:`#cardo #cardoventure #dmc #{CITYTAG} #powersportsdealer`
   },
   {
     code:"CV-05", name:"Nothing bolted on", when:"1 week out",
@@ -309,7 +314,7 @@ The Venture builds it in. IP67 waterproof, so sand, dust, and mud aren't a probl
 Here's the part that surprises people though — every electronic component is removable, serviceable and upgradeable. Built in doesn't mean sealed in. When the next generation of the guts comes along, the helmet doesn't become obsolete.
 
 Backed by up to a 5-year warranty. Coming soon.`,
-    tags:`#cardo #cardoventure #ip67 #meshcomms #enduro #offroad #advrider #dualsport #{CITYTAG} #powersportsdealer`
+    tags:`#cardo #cardoventure #ip67 #{CITYTAG} #powersportsdealer`
   },
   {
     code:"CV-06", name:"Get on the list", when:"Launch week",
@@ -332,7 +337,7 @@ If you want one out of that first batch, comment below or call the shop and we'l
 Mesh comms and JBL sound built into a composite shell certified to ECE 22.06 and DOT. There's nothing else like it right now.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#cardo #cardoventure #meshcomms #enduro #advrider #dualsport #offroad #newgear #{CITYTAG} #powersportsdealer`
+    tags:`#cardo #cardoventure #meshcomms #{CITYTAG} #powersportsdealer`
   }
 ];
 
@@ -373,7 +378,10 @@ document.getElementById('stories').innerHTML=STORIES.map((s,i)=>`
 
 function render(){
   POSTS.forEach((p,i)=>{
-    document.getElementById('cap'+i).textContent=fill(p.caption);
+    let _t=fill(p.caption).trimEnd();
+    const _c=[val('shop'),val('city'),val('phone')].filter(Boolean).join(' · ');
+    if(_c && !_t.endsWith(_c)) _t += '\n\n' + _c;
+    document.getElementById('cap'+i).textContent=_t;
     document.getElementById('tag'+i).textContent=fill(p.tags);
   });
   STORIES.forEach((s,i)=>{document.getElementById('scap'+i).textContent=fill(s.cap);});

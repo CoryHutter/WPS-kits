@@ -101,12 +101,17 @@
 
   footer{margin-top:64px;padding-top:22px;border-top:1px solid #2b3238;font-size:13px;color:#8d979d}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* --- contact info lives in the caption, not on the graphic --- */
+  .tok-shop,.tok-city,.tok-phone{display:none!important}
+  .t-foot{justify-content:flex-end}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
+  <a href="index.html" style="display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--alum-2);text-decoration:none;padding:6px 0;margin-bottom:6px">&larr; All dealer kits</a>
   <div class="eyebrow">Dealer Social Kit · Kit 04 · 6 posts</div>
   <h1>EVS Evolution<br><em>Youth</em></h1>
   <p class="lede">Six ready-to-post graphics and captions for the Evolution youth chest protector. Written for parents, because parents are the ones buying. Put your shop name in below, then save and copy.</p>
@@ -202,7 +207,7 @@ The EVS Evolution youth protector was built around that exact problem. A perfora
 Gear only works when it's on. This is the one that stays on.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#evs #evssports #chestprotector #youthmx #dirtbikekids #motocrossfamily #ridesafe #minibike #{CITYTAG} #powersportsdealer`
+    tags:`#evs #evssports #chestprotector #{CITYTAG} #powersportsdealer`
   },
   {
     code:"EVS-02", name:"The ratings", when:"Proof post",
@@ -228,7 +233,7 @@ The EVS Evolution is certified impact protection at both ends — CE EN 1621-3 L
 You still get the roost coverage. You also get a rating you can look up.
 
 Ask us to show you the difference side by side.`,
-    tags:`#evs #chestprotector #ce1621 #youthmx #ridesafe #dirtbikekids #motocrossfamily #protection #{CITYTAG} #powersportsdealer`
+    tags:`#evs #chestprotector #ce1621 #{CITYTAG} #powersportsdealer`
   },
   {
     code:"EVS-03", name:"Not foam", when:"Scroll stopper",
@@ -250,7 +255,7 @@ RE ZRO isn't a slab of foam — it's an engineered lattice. Under impact the str
 The upside for the rider is that it stays flexible. Hard plastic protects by being rigid, which is exactly why kids hate wearing it. This moves with them and still carries a CE Level 1 rating front and back.
 
 Come see it in person. It doesn't look like anything else on the shelf.`,
-    tags:`#evs #rezro #chestprotector #impacttech #youthmx #motocross #ridesafe #dirtbikekids #{CITYTAG} #powersportsdealer`
+    tags:`#evs #rezro #chestprotector #{CITYTAG} #powersportsdealer`
   },
   {
     code:"EVS-04", name:"Under the jersey", when:"Objection killer",
@@ -271,7 +276,7 @@ The Evolution is cut low-profile so it wears under a jersey. From the outside no
 Adjustable shoulder and waist straps lock it in place so it isn't sliding around mid-moto and giving them another reason to take it off.
 
 Let them wear it their way. Just get them wearing it.`,
-    tags:`#evs #chestprotector #youthmx #underjersey #dirtbikekids #motocrossfamily #ridesafe #mxgear #{CITYTAG} #powersportsdealer`
+    tags:`#evs #chestprotector #youthmx #{CITYTAG} #powersportsdealer`
   },
   {
     code:"EVS-05", name:"Three sports", when:"Value angle",
@@ -293,7 +298,7 @@ The EVS Evolution is built for motocross, off-road, and mountain biking. Same pr
 Light enough and vented enough that it makes sense on a bicycle, rated enough that it belongs on a dirt bike.
 
 One purchase, a lot more days of use.`,
-    tags:`#evs #chestprotector #mtb #youthmx #mountainbiking #dirtbikekids #ridesafe #trailriding #{CITYTAG} #powersportsdealer`
+    tags:`#evs #chestprotector #mtb #{CITYTAG} #powersportsdealer`
   },
   {
     code:"EVS-06", name:"Get fitted", when:"Foot traffic",
@@ -314,7 +319,7 @@ Bring your rider in and we'll set it up properly — shoulder straps, waist stra
 We'll also tell you honestly if they've still got a season left in the one they've got.
 
 {SHOP} · {CITY} · {PHONE}`,
-    tags:`#evs #chestprotector #youthmx #gearfit #dirtbikekids #motocrossfamily #shoplocal #ridesafe #{CITYTAG} #powersportsdealer`
+    tags:`#evs #chestprotector #youthmx #{CITYTAG} #powersportsdealer`
   }
 ];
 
@@ -355,7 +360,10 @@ document.getElementById('stories').innerHTML=STORIES.map((s,i)=>`
 
 function render(){
   POSTS.forEach((p,i)=>{
-    document.getElementById('cap'+i).textContent=fill(p.caption);
+    let _t=fill(p.caption).trimEnd();
+    const _c=[val('shop'),val('city'),val('phone')].filter(Boolean).join(' · ');
+    if(_c && !_t.endsWith(_c)) _t += '\n\n' + _c;
+    document.getElementById('cap'+i).textContent=_t;
     document.getElementById('tag'+i).textContent=fill(p.tags);
   });
   STORIES.forEach((s,i)=>{document.getElementById('scap'+i).textContent=fill(s.cap);});

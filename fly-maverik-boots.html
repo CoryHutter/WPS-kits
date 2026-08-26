@@ -298,7 +298,28 @@ document.addEventListener('click',async e=>{
       const c=await html2canvas(box,{scale:1080/box.offsetWidth,backgroundColor:null,logging:false,useCORS:true});
       const a=document.createElement('a');
       a.download=`${POSTS[i].code}-${val('shop').replace(/[^A-Za-z0-9]/g,'')}.png`;
-      a.href=c.toDataURL('image/png');a.click();flash(b,'Saved');
+        if(b.dataset.dl!==undefined){
+    const i=b.dataset.dl, box=document.getElementById('tile'+i);
+    if(typeof html2canvas!=='function'){flash(b,'Screenshot it');return;}
+    flash(b,'Saving…');
+    try{
+      const c=await html2canvas(box,{scale:1080/box.offsetWidth,backgroundColor:null,logging:false,useCORS:true});
+      const name=`${POSTS[i].code}-${val('shop').replace(/[^A-Za-z0-9]/g,'')}.png`;
+      const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+      const file=new File([blob],name,{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file]});flash(b,'Saved');}
+        catch(err){flash(b,'Save image');}
+        return;
+      }
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.download=name;a.href=url;a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      flash(b,'Saved');
+    }catch(err){flash(b,'Screenshot it');}
+  }
+
     }catch(err){flash(b,'Screenshot it');}
   }
 });

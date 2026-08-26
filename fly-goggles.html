@@ -470,7 +470,18 @@ if(navigator.canShare&&navigator.canShare({files:[file]})){
   catch(err){flash(b,'Save image');}
   return;
 }
+const const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+const file=new File([blob],a.download,{type:'image/png'});
+if(navigator.canShare&&navigator.canShare({files:[file]})){
+  try{await navigator.share({files:[file]});flash(b,'Saved');}
+  catch(err){flash(b,'Save image');}
+  return;
+}
 const url=URL.createObjectURL(blob);
+a.href=url;a.click();
+setTimeout(()=>URL.revokeObjectURL(url),1000);
+flash(b,'Saved');
+
 a.href=url;a.click();
 setTimeout(()=>URL.revokeObjectURL(url),1000);
 flash(b,'Saved');

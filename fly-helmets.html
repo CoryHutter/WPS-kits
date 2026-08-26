@@ -227,14 +227,16 @@ Come try one on. A helmet is the one thing you should never buy off a photo.
   {
     code:"FLY-02", name:"Six colorways", when:"Browse day",
     tile:`<div class="tile red">
-      <div class="quad">
+      <div class="quad" style="top:31cqw;bottom:7cqw;padding:0 4cqw 0 15cqw">
         <img src="${'{'}blue}"><img src="${'{'}orange}">
         <img src="${'{'}hivis}"><img src="${'{'}mono}">
       </div>
+      <div style="position:absolute;z-index:5;left:-20cqw;top:44cqw;width:56cqw;text-align:center;transform:rotate(-90deg)">
+        <span class="t-kicker">Kinetic lineup</span>
+      </div>
       <div class="t-pad">
         <div>
-          <div class="t-kicker">Kinetic lineup</div>
-          <h2 class="t-head" style="font-size:12.5cqw;margin-top:2cqw">Pick<br>your look.</h2>
+          <h2 class="t-head" style="font-size:11cqw;margin:0;white-space:nowrap">Pick your look.</h2>
         </div>
         <div class="t-foot"><span class="tok-shop"></span><span class="tok-city"></span></div>
       </div>
@@ -254,7 +256,7 @@ In stock now in youth and adult sizes.`,
         <div>
           <div class="t-kicker">Fly Kinetic</div>
           <h2 class="t-head" style="font-size:10cqw;margin-top:2cqw">The<br>numbers.</h2>
-          <table class="spec">
+          <table class="spec" style="max-width:46cqw">
             <tr><td>Certification</td><td>DOT + ECE 22.06</td></tr>
             <tr><td>Shell</td><td>Polymer</td></tr>
             <tr><td>Liner</td><td>Dual-density EPS</td></tr>
@@ -439,18 +441,7 @@ document.addEventListener('click',async e=>{
       const c=await html2canvas(box,{scale:1080/box.offsetWidth,backgroundColor:null,logging:false,useCORS:true});
       const a=document.createElement('a');
       a.download=`${POSTS[i].code}-${val('shop').replace(/[^A-Za-z0-9]/g,'')}.png`;
-      const blob=await new Promise(r=>c.toBlob(r,'image/png'));
-const file=new File([blob],a.download,{type:'image/png'});
-if(navigator.canShare&&navigator.canShare({files:[file]})){
-  try{await navigator.share({files:[file]});flash(b,'Saved');}
-  catch(err){flash(b,'Save image');}
-  return;
-}
-const url=URL.createObjectURL(blob);
-a.href=url;a.click();
-setTimeout(()=>URL.revokeObjectURL(url),1000);
-flash(b,'Saved');
-
+      a.href=c.toDataURL('image/png');a.click();flash(b,'Saved');
     }catch(err){flash(b,'Screenshot it');}
   }
 });

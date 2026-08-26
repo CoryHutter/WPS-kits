@@ -217,7 +217,7 @@ Gear only works when it's on. This is the one that stays on.
         <div>
           <div class="t-kicker">Certified</div>
           <h2 class="t-head" style="margin-top:2cqw;font-size:10.5cqw">Rated.<br>Front<br>and back.</h2>
-          <table class="spec" style="max-width:52cqw">
+          <table class="spec" style="max-width:40cqw">
             <tr><td>Chest</td><td>EN 1621-3 L1</td></tr>
             <tr><td>Back</td><td>EN 1621-2 L1</td></tr>
             <tr><td>Chassis</td><td>Hexprene</td></tr>
@@ -392,18 +392,7 @@ document.addEventListener('click',async e=>{
       const c=await html2canvas(box,{scale:1080/box.offsetWidth,backgroundColor:null,logging:false,useCORS:true});
       const a=document.createElement('a');
       a.download=`${POSTS[i].code}-${val('shop').replace(/[^A-Za-z0-9]/g,'')}.png`;
-      const blob=await new Promise(r=>c.toBlob(r,'image/png'));
-const file=new File([blob],a.download,{type:'image/png'});
-if(navigator.canShare&&navigator.canShare({files:[file]})){
-  try{await navigator.share({files:[file]});flash(b,'Saved');}
-  catch(err){flash(b,'Save image');}
-  return;
-}
-const url=URL.createObjectURL(blob);
-a.href=url;a.click();
-setTimeout(()=>URL.revokeObjectURL(url),1000);
-flash(b,'Saved');
-
+      a.href=c.toDataURL('image/png');a.click();flash(b,'Saved');
     }catch(err){flash(b,'Screenshot it');}
   }
 });

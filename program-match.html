@@ -93,6 +93,12 @@ details.more[open]>summary::after{content:"\2212"}
 .bar{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:14px}
 .bar-fill{height:5px;background:var(--red);border-radius:2px;flex:none;min-width:5px}
 .bar-n{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto;flex:none}
+.flyer{margin-top:10px}
+.flyer img{width:100%;border-radius:3px;border:1px solid var(--line);display:block}
+.flyer-btn{margin-top:9px}
+.thumb{width:100%;max-width:240px;border:1px solid var(--line);border-radius:3px;margin-top:10px;display:block}
+.meter{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.06em;margin-top:10px}
+.meter b{color:var(--brass);font-weight:500}
 .empty{border:1px dashed var(--line);border-radius:3px;padding:26px 18px;text-align:center;color:var(--muted);font-size:14px}
 .empty strong{display:block;font-family:var(--disp);font-size:20px;letter-spacing:.05em;text-transform:uppercase;color:var(--cream);margin-bottom:6px}
 .mapgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -225,6 +231,17 @@ window.addEventListener('unhandledrejection',function(e){
       <div class="field"><label for="p-ends">Ends</label><input type="date" id="p-ends"></div>
       <div class="field"><label for="p-min">Minimum buy-in</label><input type="text" id="p-min" placeholder="12 units / $1,500" autocomplete="off"></div>
     </div>
+    <div class="field">
+      <label>Program flyer</label>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn btn-ghost" id="pPickImg">Attach photo</button>
+        <button class="btn btn-ghost" id="pClearImg">Remove</button>
+      </div>
+      <input type="file" id="pImgFile" accept="image/*" class="hidden">
+      <input type="text" id="p-imgurl" placeholder="or a file in your repo, e.g. flyers/kfi.png" autocomplete="off" style="margin-top:8px">
+      <div id="pImgPreview"></div>
+    </div>
+
     <button class="btn btn-primary" id="saveProgram">Add program</button>
     <div class="btn-row hidden" id="pEditRow">
       <button class="btn btn-ghost" id="pCancel">Cancel</button>
@@ -289,7 +306,9 @@ const KNOWN=[['fly','Fly Racing'],['firepower','Fire Power'],['fire power','Fire
   ['alpinestars','Alpinestars'],['astars','Alpinestars']];
 const BASE_BRANDS=['Fly Racing','Fire Power','KFI','Open Trail','Michelin','Dunlop','Shinko','Cardo','EVS','Bel-Ray','Alpinestars'];
 
+const IMGKEY='programmatch:img:v1';
 let state={dealers:[],programs:[]};
+let images={},pImage='';
 let parsed=null, pBrands=[], editingProgram=null;
 
 const $=id=>document.getElementById(id);
@@ -301,6 +320,38 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');cle
 
 async function loadState(){try{const r=await _sget(KEY);if(r&&r.value){const p=JSON.parse(r.value);
   if(Array.isArray(p.dealers)&&Array.isArray(p.programs))state=p;}}catch(e){storageOK=false;}}
+async function loadImages(){try{const r=await _sget(IMGKEY);if(r&&r.value)images=JSON.parse(r.value)||{};}catch(e){images={};}}
+async function saveImages(){
+  try{const r=await _sset(IMGKEY,JSON.stringify(images));if(!r){toast('Flyer too large to save');return false;}return true;}
+  catch(e){toast('Flyer too large to save — try a tighter crop');return false;}
+}
+function imgBytes(){let n=0;for(const k in images){if(images[k])n+=images[k].length;}return n;}
+function downscale(file,maxW,q){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onerror=()=>rej(new Error('could not read that file'));
+    fr.onload=()=>{
+      const im=new Image();
+      im.onerror=()=>rej(new Error('that file is not an image'));
+      im.onload=()=>{
+        try{
+          const sc=Math.min(1,maxW/im.width);
+          const c=document.createElement('canvas');
+          c.width=Math.max(1,Math.round(im.width*sc));
+          c.height=Math.max(1,Math.round(im.height*sc));
+          c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+          res(c.toDataURL('image/jpeg',q));
+        }catch(err){rej(err);}
+      };
+      im.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function renderImgPreview(){
+  const box=$('pImgPreview');
+  box.innerHTML=pImage?'<img class="thumb" alt="Flyer preview" src="'+esc(pImage)+'">':'';
+}
 async function saveState(){try{const r=await _sset(KEY,JSON.stringify(state));
   if(!r){toast("Couldn't save — try again");return false;}return true;}catch(e){toast("Couldn't save — try again");return false;}}
 
@@ -435,18 +486,26 @@ async function saveProgram(){
   const i=state.programs.findIndex(p=>p.id===editingProgram);
   if(i>-1)state.programs[i]=rec;else state.programs.push(rec);
   if(!await saveState())return;
+  const url=$('p-imgurl').value.trim();
+  if(url)pImage=url;
+  if(pImage)images[rec.id]=pImage; else delete images[rec.id];
+  await saveImages();
   toast(editingProgram?'Program updated':'Program added');
   clearProgramForm();renderAll();
 }
 function clearProgramForm(){
   $('p-name').value='';$('p-detail').value='';$('p-ends').value='';$('p-min').value='';
   pBrands=[];buildBrandTags();editingProgram=null;
+  pImage='';$('p-imgurl').value='';renderImgPreview();
   $('saveProgram').textContent='Add program';$('pEditRow').classList.add('hidden');
 }
 function editProgram(id){
   const p=state.programs.find(x=>x.id===id);if(!p)return;
   $('p-name').value=p.name;$('p-detail').value=p.detail||'';$('p-ends').value=p.ends||'';$('p-min').value=p.min||'';
   pBrands=(p.brands||[]).slice();buildBrandTags();editingProgram=id;
+  pImage=images[id]||'';
+  $('p-imgurl').value=(pImage&&pImage.slice(0,5)!=='data:')?pImage:'';
+  renderImgPreview();
   $('saveProgram').textContent='Save changes';$('pEditRow').classList.remove('hidden');
   window.scrollTo(0,0);
 }
@@ -491,8 +550,12 @@ function renderPrograms(){
       (p.detail?'<p style="margin:0;font-size:14px">'+esc(p.detail)+'</p>':'')+
       '<div class="chips">'+(p.brands||[]).map(b=>'<span class="chip">'+esc(b)+'</span>').join('')+'</div>'+
       '<p class="pmeta" style="margin:8px 0 0">'+(p.ends?(dead?'Expired ':'Ends ')+prettyDate(p.ends):'No end date')+
-      (p.min?' · min '+esc(p.min):'')+' · tap to edit</p></div>';
+      (p.min?' · min '+esc(p.min):'')+(images[p.id]?' · flyer attached':'')+' · tap to edit</p></div>';
   }).join('');
+  const kb=Math.round(imgBytes()/1024);
+  const n=Object.keys(images).filter(k=>images[k]&&images[k].slice(0,5)==='data:').length;
+  box.innerHTML+='<p class="meter">'+n+' stored flyer'+(n===1?'':'s')+' · <b>'+kb+' KB</b> of roughly 4000 KB'+
+    (kb>3000?' — running out of room, use repo file names instead of photos':'')+'</p>';
 }
 
 /* ---------- gaps ---------- */
@@ -545,7 +608,9 @@ function renderGaps(){
       pHtml=progs.length
         ? progs.map(p=>'<div class="prog"><p class="pname">'+esc(p.name)+'</p>'+
             (p.detail?'<p>'+esc(p.detail)+'</p>':'')+
-            '<p class="pmeta">'+(p.ends?'Ends '+prettyDate(p.ends):'No end date')+(p.min?' · min '+esc(p.min):'')+'</p></div>').join('')
+            '<p class="pmeta">'+(p.ends?'Ends '+prettyDate(p.ends):'No end date')+(p.min?' · min '+esc(p.min):'')+'</p>'+
+            (images[p.id]?'<button class="btn btn-ghost flyer-btn" data-flyer="'+p.id+'">View flyer</button><div class="flyer hidden" data-fl="'+p.id+'"></div>':'')+
+            '</div>').join('')
         : '<p class="noprog">No live program covers this one</p>';
     }
     const momTxt=(r.mom!=null)?' · month '+(r.mom>=0?'+':'')+money(r.mom)+(r.momPct!=null?' ('+(r.momPct>=0?'+':'')+Math.round(r.momPct)+'%)':''):'';
@@ -596,7 +661,7 @@ async function copyOut(){
   catch(e){ta.focus();ta.setSelectionRange(0,ta.value.length);toast('Select all and copy');}
 }
 function backup(){
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify(Object.assign({},state,{images:images}),null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='program-match-'+todayISO()+'.json';a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Backup saved');
@@ -607,7 +672,9 @@ function restore(file){
     try{
       const p=JSON.parse(r.result);
       if(!Array.isArray(p.dealers)||!Array.isArray(p.programs))throw new Error('bad');
-      state=p;if(await saveState()){toast('Backup restored');renderAll();}
+      if(p.images&&typeof p.images==='object'){images=p.images;await saveImages();}
+      state={dealers:p.dealers,programs:p.programs};
+      if(await saveState()){toast('Backup restored');renderAll();}
     }catch(e){toast("That file didn't read as a backup");}
   };
   r.readAsText(file);
@@ -666,6 +733,34 @@ $('pDelete').addEventListener('click',async()=>{
   state.programs=state.programs.filter(x=>x.id!==editingProgram);
   if(await saveState()){toast('Program deleted');clearProgramForm();renderAll();}
 });
+$('pPickImg').addEventListener('click',()=>$('pImgFile').click());
+$('pClearImg').addEventListener('click',()=>{pImage='';$('p-imgurl').value='';renderImgPreview();toast('Flyer removed');});
+$('pImgFile').addEventListener('change',async ev=>{
+  const f=ev.target.files[0];ev.target.value='';
+  if(!f)return;
+  toast('Shrinking the photo...');
+  try{
+    pImage=await downscale(f,1100,0.7);
+    $('p-imgurl').value='';
+    renderImgPreview();
+    toast('Flyer ready — now tap Add program');
+  }catch(e){toast(e.message||'Could not use that photo');}
+});
+$('p-imgurl').addEventListener('input',()=>{
+  const v=$('p-imgurl').value.trim();
+  if(v){pImage=v;renderImgPreview();}
+});
+$('gapBody').addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-flyer]');
+  if(!b)return;
+  const id=b.dataset.flyer;
+  const box=b.parentNode.querySelector('[data-fl="'+id+'"]');
+  if(!box)return;
+  if(box.classList.contains('hidden')){
+    if(!box.innerHTML)box.innerHTML='<img alt="Program flyer" src="'+esc(images[id])+'">';
+    box.classList.remove('hidden');b.textContent='Hide flyer';
+  }else{box.classList.add('hidden');b.textContent='View flyer';}
+});
 $('importPrograms').addEventListener('click',importPrograms);
 $('clearExpired').addEventListener('click',clearExpired);
 $('callSheetBtn').addEventListener('click',()=>openModal('Call sheet',callSheet()));
@@ -677,7 +772,7 @@ $('restoreBtn').addEventListener('click',()=>$('restoreFile').click());
 $('restoreFile').addEventListener('change',ev=>{if(ev.target.files[0])restore(ev.target.files[0]);ev.target.value='';});
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 
-(async function init(){renderAll();await loadState();renderAll();
+(async function init(){renderAll();await loadState();await loadImages();renderAll();
   if(!storageOK)toast('Saved data unavailable — entries may not persist');})();
 </script>
 </body>

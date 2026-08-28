@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dealer Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1723;--panel:#15202F;--panel2:#1B2838;--line:#27374B;
+  --cream:#E9E1D2;--muted:#8496AC;--brass:#C99A3C;--brass-dim:#7E6128;
+  --green:#5E9B76;--red:#B4614F;
+  --disp:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono","SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--ink);color:var(--cream);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-bottom:40px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+
+header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101B29,#0E1723);padding:18px 0 14px;margin-bottom:20px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{font-family:var(--disp);font-weight:700;font-size:30px;letter-spacing:.06em;text-transform:uppercase;margin:0;line-height:1}
+h1 .dot{color:var(--brass)}
+.tally{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-align:right;white-space:nowrap;line-height:1.5}
+.tally b{color:var(--brass);font-weight:500}
+
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+h2{font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.05em;text-transform:uppercase;margin:0 0 4px;line-height:1.1}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+
+.field{margin-bottom:14px}
+label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+input[type=text],input[type=date],textarea,select{width:100%;background:var(--panel);color:var(--cream);
+  border:1px solid var(--line);border-radius:3px;padding:11px 12px;font-family:var(--body);font-size:16px;appearance:none}
+textarea{resize:vertical;min-height:72px;line-height:1.45}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--brass);outline-offset:1px;border-color:var(--brass)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* recent dealer chips */
+.recent{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.recent button{background:var(--panel2);border:1px solid var(--line);border-radius:99px;color:var(--muted);
+  font-family:var(--mono);font-size:11px;padding:5px 11px;cursor:pointer}
+.recent button:active{border-color:var(--brass);color:var(--cream)}
+
+/* pulse picker */
+.pulse{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.pl{background:var(--panel);border:1px solid var(--line);border-radius:3px;color:var(--muted);padding:11px 4px;cursor:pointer;
+  font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+.pl[aria-pressed=true]{color:var(--ink);font-weight:500}
+.pl[data-v=up][aria-pressed=true]{background:var(--green);border-color:var(--green)}
+.pl[data-v=flat][aria-pressed=true]{background:var(--brass);border-color:var(--brass)}
+.pl[data-v=down][aria-pressed=true]{background:var(--red);border-color:var(--red)}
+
+/* tag chips */
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{background:var(--panel);border:1px solid var(--line);border-radius:3px;color:var(--muted);
+  font-family:var(--mono);font-size:11px;padding:7px 10px;cursor:pointer;letter-spacing:.03em}
+.tag[aria-pressed=true]{background:var(--brass);border-color:var(--brass);color:#12100A;font-weight:500}
+.tag.t-issue[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#160C09}
+
+.btn{display:block;width:100%;border:0;border-radius:3px;cursor:pointer;font-family:var(--disp);font-size:19px;
+  font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:14px}
+.btn-primary{background:var(--brass);color:#12100A}
+.btn-primary:active{background:#B0842F}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-family:var(--mono);
+  font-size:12px;font-weight:400;letter-spacing:.1em;padding:11px}
+.btn-ghost:active{color:var(--cream);border-color:var(--brass)}
+.btn-row{display:flex;gap:8px;margin-top:10px}
+.btn-row .btn{flex:1}
+
+details.more{margin:4px 0 18px;border-top:1px solid var(--line);padding-top:14px}
+details.more>summary{list-style:none;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--brass);display:flex;align-items:center;gap:8px;padding:2px 0}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"+";font-size:15px;margin-left:auto;color:var(--brass)}
+details.more[open]>summary::after{content:"\2212"}
+.more-body{padding-top:14px}
+
+/* dealer rows */
+.dealer{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:3px;
+  padding:12px 13px;margin-bottom:8px;cursor:pointer}
+.dealer[data-age=fresh]{border-left-color:var(--green)}
+.dealer[data-age=due]{border-left-color:var(--brass)}
+.dealer[data-age=cold]{border-left-color:var(--red)}
+.dealer.open{background:var(--panel2)}
+.d-top{display:flex;align-items:baseline;gap:10px}
+.d-name{font-family:var(--disp);font-size:21px;font-weight:600;letter-spacing:.03em;line-height:1.15;flex:1;min-width:0}
+.d-days{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;flex:none}
+.d-days.cold{color:var(--red)}
+.rail{height:4px;background:#101A26;border-radius:2px;margin-top:8px;overflow:hidden}
+.rail span{display:block;height:100%;border-radius:2px}
+.trend{display:flex;gap:4px;margin-top:8px;align-items:center}
+.trend i{width:9px;height:9px;border-radius:50%;display:block}
+.trend em{font-family:var(--mono);font-size:10px;color:var(--muted);font-style:normal;letter-spacing:.08em;margin-left:4px}
+.up{background:var(--green)}.flat{background:var(--brass)}.down{background:var(--red)}
+.visit{border-top:1px solid var(--line);padding-top:11px;margin-top:11px}
+.v-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.dl{margin:0 0 9px}
+.dl dt{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.dl dd{margin:0;font-size:14.5px;line-height:1.45;white-space:pre-wrap}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:15px;margin-bottom:12px}
+.stat-row{display:flex;gap:8px;margin-bottom:12px}
+.stat{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:12px 6px;text-align:center}
+.stat b{display:block;font-family:var(--disp);font-size:32px;font-weight:700;line-height:1;color:var(--brass)}
+.stat.go b{color:var(--green)}.stat.no b{color:var(--red)}
+.stat span{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-top:6px}
+.bar{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:14px}
+.bar-fill{height:5px;background:var(--brass);border-radius:2px;flex:none;min-width:5px}
+.bar-fill.issue{background:var(--red)}
+.bar-n{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto;flex:none}
+.quote{border-left:2px solid var(--line);padding-left:11px;margin:0 0 11px;font-size:14px;line-height:1.45}
+.quote cite{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);font-style:normal;margin-top:4px;text-transform:uppercase}
+
+.empty{border:1px dashed var(--line);border-radius:3px;padding:26px 18px;text-align:center;color:var(--muted);font-size:14px}
+.empty strong{display:block;font-family:var(--disp);font-size:20px;letter-spacing:.05em;text-transform:uppercase;color:var(--cream);margin-bottom:6px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;
+  background:var(--brass);color:#12100A;padding:10px 18px;border-radius:3px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.06em;z-index:50;opacity:0;pointer-events:none;transition:opacity .18s}
+#toast.show{opacity:1}
+#modal{position:fixed;inset:0;background:rgba(6,11,18,.92);z-index:60;display:none;padding:16px;overflow:auto}
+#modal.show{display:block}
+.modal-inner{max-width:640px;margin:20px auto;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px}
+#exportText{width:100%;height:44vh;font-family:var(--mono);font-size:12px;line-height:1.5}
+
+nav{position:sticky;top:0;z-index:40;background:#0B131E;border-bottom:1px solid var(--line);display:flex;margin-bottom:20px}
+nav button{flex:1;background:none;border:0;cursor:pointer;padding:14px 4px;color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid transparent}
+nav button[aria-current=true]{color:var(--brass);border-bottom-color:var(--brass)}
+.view{display:none}.view.active{display:block}
+.hidden{display:none !important}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+<script>
+window.addEventListener('error',function(e){
+  var t=document.getElementById('tally');
+  if(t){t.style.color='#B4614F';t.textContent='Script error: '+(e.message||'unknown');}
+});
+window.addEventListener('unhandledrejection',function(e){
+  var t=document.getElementById('tally');
+  if(t){t.style.color='#B4614F';t.textContent='Async error: '+((e.reason&&e.reason.message)||'unknown');}
+});
+</script>
+</head>
+<body>
+
+<header>
+  <div class="wrap brand">
+    <h1>Dealer Pulse<span class="dot">.</span></h1>
+    <div class="tally" id="tally">Loading</div>
+  </div>
+</header>
+
+<nav>
+  <button data-view="visit" aria-current="true">Log visit</button>
+  <button data-view="dealers" aria-current="false">Dealers</button>
+  <button data-view="territory" aria-current="false">Territory</button>
+</nav>
+
+<main class="wrap">
+
+  <!-- ============ VISIT ============ -->
+  <section class="view active" id="view-visit">
+    <p class="eyebrow" id="vEyebrow">New call</p>
+    <h2 id="vTitle">Log a visit</h2>
+    <p class="sub">Do this in the lot before you pull out. Detail can wait until tonight.</p>
+
+    <div class="field">
+      <label for="f-dealer">Dealer</label>
+      <input type="text" id="f-dealer" list="dealerList" placeholder="Start typing — past dealers fill in" autocomplete="off">
+      <datalist id="dealerList"></datalist>
+      <div class="recent" id="recentDealers"></div>
+    </div>
+
+    <div class="two">
+      <div class="field">
+        <label for="f-who">Who you talked to</label>
+        <input type="text" id="f-who" placeholder="First name" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-role">Their role</label>
+        <select id="f-role">
+          <option value="">—</option>
+          <option>Owner</option>
+          <option>General manager</option>
+          <option>Parts manager</option>
+          <option>Service manager</option>
+          <option>Sales manager</option>
+          <option>Parts counter</option>
+          <option>Sales floor</option>
+          <option>Office / bookkeeping</option>
+          <option>Buyer</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>How the store feels</label>
+      <div class="pulse">
+        <button class="pl" data-v="up" aria-pressed="false">Growing</button>
+        <button class="pl" data-v="flat" aria-pressed="false">Steady</button>
+        <button class="pl" data-v="down" aria-pressed="false">Slipping</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>What's moving for them</label>
+      <div class="tags" id="brandTags"></div>
+    </div>
+
+    <div class="field">
+      <label for="f-selling">Notes on what's selling</label>
+      <textarea id="f-selling" placeholder="Blew through the preseason plow order, asking about a second drop..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>What's holding them back</label>
+      <div class="tags" id="issueTags"></div>
+    </div>
+
+    <div class="field">
+      <label for="f-struggle">Notes on the struggle</label>
+      <textarea id="f-struggle" placeholder="Their words, not your read on it"></textarea>
+    </div>
+
+    <details class="more">
+      <summary>Add the detail</summary>
+      <div class="more-body">
+        <div class="two">
+          <div class="field">
+            <label for="f-type">Visit type</label>
+            <select id="f-type">
+              <option>In person</option>
+              <option>Phone</option>
+              <option>Text / email</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-date">Date</label>
+            <input type="date" id="f-date">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-sitting">What's sitting on their shelf</label>
+          <textarea id="f-sitting" placeholder="Dead stock, wrong size runs, last year's colorways"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-comp">Who else they're buying from</label>
+          <textarea id="f-comp"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-opp">Opportunity you see</label>
+          <textarea id="f-opp" placeholder="Gap board, size run audit, program buy-in"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-owe">What you committed to</label>
+          <textarea id="f-owe" placeholder="Shows up on the Territory tab until you clear it"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-order">Order written</label>
+          <input type="text" id="f-order" placeholder="Nothing today / preseason plow drop / restock" autocomplete="off">
+        </div>
+      </div>
+    </details>
+
+    <button class="btn btn-primary" id="saveBtn">Save visit</button>
+    <div class="btn-row hidden" id="editRow">
+      <button class="btn btn-ghost" id="cancelEdit">Cancel</button>
+      <button class="btn btn-ghost" id="deleteVisit" style="color:#B4614F">Delete</button>
+    </div>
+  </section>
+
+  <!-- ============ DEALERS ============ -->
+  <section class="view" id="view-dealers">
+    <p class="eyebrow">Coverage</p>
+    <h2>Your accounts</h2>
+    <p class="sub">Longest since a visit sits at the top. Tap a dealer for the full history.</p>
+    <div class="field">
+      <input type="text" id="search" placeholder="Search dealers, people, notes" autocomplete="off">
+    </div>
+    <div id="dealerList2"></div>
+  </section>
+
+  <!-- ============ TERRITORY ============ -->
+  <section class="view" id="view-territory">
+    <p class="eyebrow">The 30-day picture</p>
+    <h2>Territory</h2>
+    <p class="sub">This is the answer when he asks how the territory's doing.</p>
+    <div id="terrBody"></div>
+    <button class="btn btn-primary" id="bossBtn" style="margin-top:6px">Write the boss update</button>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="exportBtn">Send to Claude</button>
+      <button class="btn btn-ghost" id="backupBtn">Save backup</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="restoreBtn">Restore backup</button>
+    </div>
+    <input type="file" id="restoreFile" accept="application/json,.json" class="hidden">
+  </section>
+
+</main>
+
+
+<div id="toast"></div>
+<div id="modal">
+  <div class="modal-inner">
+    <p class="eyebrow" id="modalEyebrow">Copy and send</p>
+    <h2 style="margin-bottom:12px" id="modalTitle">Update</h2>
+    <textarea id="exportText" readonly></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="copyBtn">Copy</button>
+      <button class="btn btn-ghost" id="closeModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='dealerpulse:v1';
+
+function _race(p,ms){return Promise.race([p,new Promise((_,rj)=>setTimeout(()=>rj(new Error('storage timeout')),ms))]);}
+let storageOK=true;
+const _LS={
+  async get(k){const v=localStorage.getItem(k);if(v===null)throw new Error('missing');return {key:k,value:v};},
+  async set(k,v){localStorage.setItem(k,v);return {key:k,value:v};}
+};
+function _store(){return (typeof window!=='undefined'&&window.storage&&window.storage.get)?window.storage:_LS;}
+async function _sget(k){return await _race(_store().get(k),5000);}
+async function _sset(k,v){return await _race(_store().set(k,v),8000);}
+const PULSE={up:'Growing',flat:'Steady',down:'Slipping'};
+const BRANDS=['Fly Racing','Fire Power','KFI','Open Trail','Michelin','Dunlop','Shinko','Cardo','EVS','Bel-Ray','Alpinestars','Other'];
+const ISSUES=['Foot traffic','Cash flow','Floorplan tight','Staffing','Online pricing','Inventory depth','Service backed up','Ownership change','Buying elsewhere','Weather / season'];
+
+let state={visits:[],next:1};
+let pulse='flat', brands=[], issues=[], editingId=null, openDealer=null;
+
+const $=id=>document.getElementById(id);
+const F={dealer:$('f-dealer'),who:$('f-who'),role:$('f-role'),selling:$('f-selling'),struggle:$('f-struggle'),
+  type:$('f-type'),date:$('f-date'),sitting:$('f-sitting'),comp:$('f-comp'),opp:$('f-opp'),owe:$('f-owe'),order:$('f-order')};
+const DETAIL={selling:"What's selling",struggle:'Struggling with',sitting:'Sitting on the shelf',
+  comp:'Buying elsewhere from',opp:'Opportunity',owe:'I committed to',order:'Order written'};
+
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function todayISO(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);}
+function prettyDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
+function daysSince(iso){if(!iso)return 999;const[y,m,d]=iso.split('-').map(Number);
+  return Math.max(0,Math.round((new Date().setHours(0,0,0,0)-new Date(y,m-1,d).getTime())/864e5));}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2000);}
+
+async function loadState(){try{const r=await _sget(KEY);if(r&&r.value){const p=JSON.parse(r.value);if(Array.isArray(p.visits))state=p;}}catch(e){}}
+async function saveState(){try{const r=await _sset(KEY,JSON.stringify(state));if(!r){toast("Couldn't save — try again");return false;}return true;}
+  catch(e){toast("Couldn't save — try again");return false;}}
+
+/* ---------- chips ---------- */
+function buildTags(box,list,sel,cls){
+  box.innerHTML=list.map(t=>'<button class="tag '+cls+'" data-t="'+esc(t)+'" aria-pressed="false">'+esc(t)+'</button>').join('');
+  box.addEventListener('click',ev=>{
+    const b=ev.target.closest('.tag'); if(!b)return;
+    const t=b.dataset.t, arr=sel();
+    const i=arr.indexOf(t); if(i>-1)arr.splice(i,1); else arr.push(t);
+    b.setAttribute('aria-pressed',String(i===-1));
+  });
+}
+function paintTags(box,arr){box.querySelectorAll('.tag').forEach(b=>b.setAttribute('aria-pressed',String(arr.includes(b.dataset.t))));}
+function setPulse(v){pulse=v;document.querySelectorAll('.pl').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v)));}
+
+/* ---------- dealers ---------- */
+function dealerNames(){
+  const m={};
+  state.visits.forEach(v=>{if(v.dealer){const k=v.dealer.trim().toLowerCase();if(!m[k])m[k]=v.dealer.trim();}});
+  return Object.values(m).sort();
+}
+function byDealer(){
+  const m={};
+  state.visits.forEach(v=>{
+    const k=(v.dealer||'Unnamed').trim().toLowerCase();
+    if(!m[k])m[k]={name:(v.dealer||'Unnamed').trim(),visits:[]};
+    m[k].visits.push(v);
+  });
+  Object.values(m).forEach(d=>{
+    d.visits.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    d.last=d.visits[0].date; d.age=daysSince(d.last); d.pulse=d.visits[0].pulse;
+  });
+  return Object.values(m).sort((a,b)=>b.age-a.age);
+}
+function ageClass(d){return d<30?'fresh':d<60?'due':'cold';}
+
+/* ---------- form ---------- */
+function clearForm(){
+  Object.values(F).forEach(el=>{if(el.tagName==='SELECT')el.selectedIndex=0;else el.value='';});
+  F.date.value=todayISO(); F.type.selectedIndex=0;
+  brands=[];issues=[];setPulse('flat');
+  paintTags($('brandTags'),brands);paintTags($('issueTags'),issues);
+  editingId=null;
+  $('vTitle').textContent='Log a visit';$('vEyebrow').textContent='New call';
+  $('saveBtn').textContent='Save visit';$('editRow').classList.add('hidden');
+  document.querySelector('details.more').open=false;
+}
+function fillForm(v){
+  Object.keys(F).forEach(k=>F[k].value=v[k]||'');
+  F.date.value=v.date||todayISO(); F.type.value=v.type||'In person'; F.role.value=v.role||'';
+  brands=(v.brands||[]).slice(); issues=(v.issues||[]).slice();
+  paintTags($('brandTags'),brands);paintTags($('issueTags'),issues);
+  setPulse(v.pulse||'flat'); editingId=v.id;
+  $('vTitle').textContent='Editing visit';$('vEyebrow').textContent=(v.dealer||'')+' · '+prettyDate(v.date);
+  $('saveBtn').textContent='Save changes';$('editRow').classList.remove('hidden');
+  document.querySelector('details.more').open=true;
+  showView('visit');window.scrollTo(0,0);
+}
+async function handleSave(){
+  if(!F.dealer.value.trim()){toast('Which dealer?');F.dealer.focus();return;}
+  const d={};Object.keys(F).forEach(k=>d[k]=F[k].value.trim());
+  d.pulse=pulse;d.brands=brands.slice();d.issues=issues.slice();d.date=d.date||todayISO();
+  if(editingId){
+    const i=state.visits.findIndex(x=>x.id===editingId);
+    if(i>-1)state.visits[i]=Object.assign({},state.visits[i],d);
+  }else{
+    d.id='v'+Date.now()+Math.random().toString(36).slice(2,6);
+    d.idx=state.next;state.next+=1;state.visits.push(d);
+  }
+  if(!await saveState())return;
+  toast(editingId?'Changes saved':'Visit saved — '+d.dealer);
+  clearForm();renderAll();
+}
+async function handleDelete(){
+  if(!editingId)return;
+  const v=state.visits.find(x=>x.id===editingId);
+  if(!confirm('Delete this visit to '+(v?v.dealer:'this dealer')+'? This cannot be undone.'))return;
+  state.visits=state.visits.filter(x=>x.id!==editingId);
+  if(!await saveState())return;
+  toast('Visit deleted');clearForm();renderAll();
+}
+
+/* ---------- dealer list ---------- */
+function renderDealers(){
+  const q=$('search').value.trim().toLowerCase();
+  const box=$('dealerList2');
+  if(!state.visits.length){
+    box.innerHTML='<div class="empty"><strong>No visits logged</strong>Log your first stop and this fills in. After a few weeks it tells you who you\'ve been neglecting.</div>';
+    return;
+  }
+  const list=byDealer().filter(d=>!q||(d.name+' '+d.visits.map(v=>Object.values(v).join(' ')).join(' ')).toLowerCase().includes(q));
+  if(!list.length){box.innerHTML='<div class="empty"><strong>No matches</strong>Try a different word.</div>';return;}
+  const maxAge=Math.max(30,...list.map(d=>d.age));
+
+  box.innerHTML=list.map(d=>{
+    const open=openDealer===d.name;
+    const trend=d.visits.slice(0,5).reverse().map(v=>'<i class="'+(v.pulse||'flat')+'"></i>').join('');
+    let hist='';
+    if(open){
+      hist=d.visits.map(v=>{
+        const rows=Object.keys(DETAIL).filter(k=>v[k]).map(k=>'<dl class="dl"><dt>'+DETAIL[k]+'</dt><dd>'+esc(v[k])+'</dd></dl>').join('');
+        const chips=[].concat(v.brands||[],v.issues||[]);
+        return '<div class="visit"><div class="v-head">'+prettyDate(v.date)+' · '+esc(v.type||'')+
+          ' · '+PULSE[v.pulse||'flat']+(v.who?' · '+esc(v.who):'')+(v.role?' ('+esc(v.role)+')':'')+'</div>'+
+          (chips.length?'<div class="v-head" style="color:var(--brass)">'+chips.map(esc).join(' · ')+'</div>':'')+
+          rows+'<button class="btn btn-ghost" data-edit="'+v.id+'">Edit this visit</button></div>';
+      }).join('');
+    }
+    return '<article class="dealer'+(open?' open':'')+'" data-age="'+ageClass(d.age)+'" data-name="'+esc(d.name)+'">'+
+      '<div class="d-top"><span class="d-name">'+esc(d.name)+'</span>'+
+      '<span class="d-days'+(d.age>=60?' cold':'')+'">'+(d.age===0?'today':d.age+'d ago')+'</span></div>'+
+      '<div class="rail"><span class="'+(d.pulse||'flat')+'" style="width:'+Math.round(d.age/maxAge*100)+'%"></span></div>'+
+      '<div class="trend">'+trend+'<em>'+d.visits.length+' visit'+(d.visits.length>1?'s':'')+' · now '+PULSE[d.pulse||'flat'].toLowerCase()+'</em></div>'+
+      hist+'</article>';
+  }).join('');
+}
+
+/* ---------- territory ---------- */
+function tally(key){
+  const m={};
+  state.visits.forEach(v=>(v[key]||[]).forEach(t=>m[t]=(m[t]||0)+1));
+  return Object.entries(m).map(([label,n])=>({label,n})).sort((a,b)=>b.n-a.n);
+}
+function recentVisits(days){return state.visits.filter(v=>daysSince(v.date)<=days);}
+
+function renderTerritory(){
+  const box=$('terrBody');
+  if(!state.visits.length){
+    box.innerHTML='<div class="empty"><strong>Nothing to report yet</strong>Log a couple weeks of stops and this page writes your update for you.</div>';
+    return;
+  }
+  const dealers=byDealer();
+  const seen30=new Set(recentVisits(30).map(v=>(v.dealer||'').toLowerCase())).size;
+  const cold=dealers.filter(d=>d.age>=60);
+  const down=dealers.filter(d=>d.pulse==='down');
+  const up=dealers.filter(d=>d.pulse==='up');
+
+  let html='<div class="stat-row">'+
+    '<div class="stat"><b>'+seen30+'</b><span>Seen in 30d</span></div>'+
+    '<div class="stat go"><b>'+up.length+'</b><span>Growing</span></div>'+
+    '<div class="stat no"><b>'+down.length+'</b><span>Slipping</span></div>'+
+    '<div class="stat no"><b>'+cold.length+'</b><span>60d+ cold</span></div></div>';
+
+  if(cold.length){
+    html+='<div class="card"><p class="eyebrow">Haven\'t been in these doors</p>'+
+      cold.map(d=>'<div class="bar"><span class="bar-fill issue" style="width:'+Math.min(90,d.age)+'px"></span>'+
+        esc(d.name)+'<span class="bar-n">'+d.age+'d</span></div>').join('')+'</div>';
+  }
+  if(down.length){
+    html+='<div class="card"><p class="eyebrow">Slipping — last read</p>'+
+      down.map(d=>{const v=d.visits[0];return '<p class="quote">'+esc(v.struggle||v.selling||'No note recorded')+
+        '<cite>'+esc(d.name)+' · '+prettyDate(v.date)+'</cite></p>';}).join('')+'</div>';
+  }
+  const bt=tally('brands');
+  if(bt.length){
+    const max=bt[0].n;
+    html+='<div class="card"><p class="eyebrow">What\'s moving across the territory</p>'+
+      bt.slice(0,10).map(t=>'<div class="bar"><span class="bar-fill" style="width:'+Math.round(t.n/max*90)+'px"></span>'+
+        esc(t.label)+'<span class="bar-n">'+t.n+'</span></div>').join('')+'</div>';
+  }
+  const it=tally('issues');
+  if(it.length){
+    const max=it[0].n;
+    html+='<div class="card"><p class="eyebrow">What they\'re all up against</p>'+
+      it.slice(0,10).map(t=>'<div class="bar"><span class="bar-fill issue" style="width:'+Math.round(t.n/max*90)+'px"></span>'+
+        esc(t.label)+'<span class="bar-n">'+t.n+'</span></div>').join('')+'</div>';
+  }
+  const owed=state.visits.filter(v=>v.owe).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,12);
+  if(owed.length){
+    html+='<div class="card"><p class="eyebrow">What you owe people</p>'+
+      owed.map(v=>'<p class="quote">'+esc(v.owe)+'<cite>'+esc(v.dealer)+' · '+prettyDate(v.date)+'</cite></p>').join('')+'</div>';
+  }
+  const opps=state.visits.filter(v=>v.opp).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,10);
+  if(opps.length){
+    html+='<div class="card"><p class="eyebrow">Openings you spotted</p>'+
+      opps.map(v=>'<p class="quote">'+esc(v.opp)+'<cite>'+esc(v.dealer)+'</cite></p>').join('')+'</div>';
+  }
+  box.innerHTML=html;
+}
+
+/* ---------- exports ---------- */
+function bossUpdate(){
+  const dealers=byDealer();
+  const seen30=recentVisits(30);
+  const names30=[...new Set(seen30.map(v=>v.dealer))];
+  const up=dealers.filter(d=>d.pulse==='up'), flat=dealers.filter(d=>d.pulse==='flat'), down=dealers.filter(d=>d.pulse==='down');
+  const cold=dealers.filter(d=>d.age>=60);
+  const bt=tally('brands'), it=tally('issues');
+
+  let o='TERRITORY UPDATE — '+prettyDate(todayISO())+'\n\n';
+  o+='Accounts touched in the last 30 days: '+names30.length+' ('+seen30.length+' contacts)\n';
+  o+='Accounts on the board: '+dealers.length+'\n\n';
+
+  o+='HOW THEY\'RE DOING\n';
+  if(up.length)o+='Growing — '+up.map(d=>d.name).join(', ')+'\n';
+  if(flat.length)o+='Steady — '+flat.map(d=>d.name).join(', ')+'\n';
+  if(down.length){
+    o+='Slipping:\n';
+    down.forEach(d=>{const v=d.visits[0];o+='  · '+d.name+' — '+(v.struggle||'see notes')+'\n';});
+  }
+  o+='\n';
+  if(bt.length){o+='WHAT\'S SELLING\n'+bt.slice(0,8).map(t=>'  '+t.label+' — '+t.n+' account'+(t.n>1?'s':'')).join('\n')+'\n\n';}
+  if(it.length){o+='WHAT THEY\'RE STRUGGLING WITH\n'+it.slice(0,8).map(t=>'  '+t.label+' — '+t.n+' account'+(t.n>1?'s':'')).join('\n')+'\n\n';}
+  if(cold.length){o+='NEEDS A VISIT (60+ days)\n'+cold.map(d=>'  '+d.name+' — '+d.age+' days').join('\n')+'\n\n';}
+  const opps=state.visits.filter(v=>v.opp&&daysSince(v.date)<=45);
+  if(opps.length){o+='OPENINGS I\'M WORKING\n'+opps.map(v=>'  '+v.dealer+' — '+v.opp).join('\n')+'\n\n';}
+  const owed=state.visits.filter(v=>v.owe&&daysSince(v.date)<=45);
+  if(owed.length){o+='COMMITMENTS OUT\n'+owed.map(v=>'  '+v.dealer+' — '+v.owe).join('\n')+'\n';}
+  return o;
+}
+function fullExport(){
+  let o='WPS DEALER VISIT LOG — '+state.visits.length+' visits across '+byDealer().length+' accounts\n';
+  o+='Pulse ratings: GROWING / STEADY / SLIPPING, my read at the time of the visit.\n\n';
+  byDealer().forEach(d=>{
+    o+='═════ '+d.name+' — last seen '+d.age+' days ago, '+d.visits.length+' visits logged\n';
+    d.visits.forEach(v=>{
+      o+='  '+(v.date||'')+' ['+(v.pulse||'flat').toUpperCase()+'] '+(v.type||'')+
+        (v.who?' — '+v.who:'')+(v.role?' ('+v.role+')':'')+'\n';
+      if((v.brands||[]).length)o+='    Moving: '+v.brands.join(', ')+'\n';
+      if((v.issues||[]).length)o+='    Issues: '+v.issues.join(', ')+'\n';
+      Object.keys(DETAIL).forEach(k=>{if(v[k])o+='    '+DETAIL[k]+': '+v[k]+'\n';});
+    });
+    o+='\n';
+  });
+  o+='What I want from this: where the territory is really trending, which accounts need attention first, and what I should be pitching where.\n';
+  return o;
+}
+function openModal(title,text){
+  $('modalTitle').textContent=title;$('exportText').value=text;$('modal').classList.add('show');
+}
+async function copyOut(){
+  const ta=$('exportText');
+  try{await navigator.clipboard.writeText(ta.value);toast('Copied');}
+  catch(e){ta.focus();ta.setSelectionRange(0,ta.value.length);toast('Select all and copy');}
+}
+function backup(){
+  if(!state.visits.length){toast('Nothing to back up yet');return;}
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='dealer-pulse-'+todayISO()+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Backup saved');
+}
+function restore(file){
+  const r=new FileReader();
+  r.onload=async()=>{
+    try{
+      const p=JSON.parse(r.result);
+      if(!Array.isArray(p.visits))throw new Error('bad');
+      const have=new Set(state.visits.map(v=>v.id));let added=0;
+      p.visits.forEach(v=>{if(v.id&&!have.has(v.id)){state.visits.push(v);added++;}});
+      state.next=Math.max(state.next,p.next||1,...state.visits.map(v=>(v.idx||0)+1));
+      if(await saveState()){toast(added+' visits restored');renderAll();}
+    }catch(e){toast("That file didn't read as a backup");}
+  };
+  r.readAsText(file);
+}
+
+/* ---------- shell ---------- */
+function showView(v){
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));
+  document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.view===v)));
+}
+function renderAll(){
+  const dealers=byDealer();
+  const cold=dealers.filter(d=>d.age>=60).length;
+  $('tally').innerHTML='<b>'+dealers.length+'</b> accounts<br>'+cold+' need a visit';
+  $('dealerList').innerHTML=dealerNames().map(n=>'<option value="'+esc(n)+'">').join('');
+  const recent=[...new Set(state.visits.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(v=>v.dealer))].slice(0,6);
+  $('recentDealers').innerHTML=recent.map(n=>'<button type="button" data-d="'+esc(n)+'">'+esc(n)+'</button>').join('');
+  renderDealers();renderTerritory();
+}
+
+buildTags($('brandTags'),BRANDS,()=>brands,'t-brand');
+buildTags($('issueTags'),ISSUES,()=>issues,'t-issue');
+document.querySelectorAll('.pl').forEach(b=>b.addEventListener('click',()=>setPulse(b.dataset.v)));
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+$('recentDealers').addEventListener('click',ev=>{const b=ev.target.closest('button');if(b){F.dealer.value=b.dataset.d;toast(b.dataset.d);}});
+$('saveBtn').addEventListener('click',handleSave);
+$('deleteVisit').addEventListener('click',handleDelete);
+$('cancelEdit').addEventListener('click',()=>{clearForm();toast('Edit cancelled');});
+$('search').addEventListener('input',renderDealers);
+$('bossBtn').addEventListener('click',()=>{if(!state.visits.length){toast('Log some visits first');return;}openModal('Boss update',bossUpdate());});
+$('exportBtn').addEventListener('click',()=>{if(!state.visits.length){toast('Log some visits first');return;}openModal('Full log',fullExport());});
+$('copyBtn').addEventListener('click',copyOut);
+$('closeModal').addEventListener('click',()=>$('modal').classList.remove('show'));
+$('backupBtn').addEventListener('click',backup);
+$('restoreBtn').addEventListener('click',()=>$('restoreFile').click());
+$('restoreFile').addEventListener('change',ev=>{if(ev.target.files[0])restore(ev.target.files[0]);ev.target.value='';});
+$('dealerList2').addEventListener('click',ev=>{
+  const e=ev.target.closest('[data-edit]');
+  if(e){const v=state.visits.find(x=>x.id===e.dataset.edit);if(v)fillForm(v);return;}
+  const card=ev.target.closest('.dealer');if(!card)return;
+  openDealer=openDealer===card.dataset.name?null:card.dataset.name;
+  renderDealers();
+});
+
+(async function init(){
+  F.date.value=todayISO();setPulse('flat');
+  renderAll();await loadState();renderAll();
+  if(!storageOK)toast('Saved data unavailable — entries may not persist');
+})();
+</script>
+</body>
+</html>

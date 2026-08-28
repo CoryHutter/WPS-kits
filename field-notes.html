@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Field Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1723;
+  --panel:#15202F;
+  --panel2:#1B2838;
+  --line:#27374B;
+  --cream:#E9E1D2;
+  --muted:#8496AC;
+  --brass:#C99A3C;
+  --brass-dim:#7E6128;
+  --green:#5E9B76;
+  --red:#B4614F;
+  --disp:"Barlow Condensed","Haettenschweiler","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono","SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink);
+  color:var(--cream);
+  font-family:var(--body);
+  font-size:16px;
+  line-height:1.5;
+  padding-bottom:40px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+
+/* ---------- header ---------- */
+header{
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#101B29,#0E1723);
+  padding:18px 0 14px;
+  margin-bottom:20px;
+}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{
+  font-family:var(--disp);
+  font-weight:700;
+  font-size:30px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  margin:0;
+  line-height:1;
+}
+h1 .dot{color:var(--brass)}
+.tally{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-align:right;white-space:nowrap}
+.tally b{color:var(--brass);font-weight:500}
+
+/* ---------- type helpers ---------- */
+.eyebrow{
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 8px;
+}
+h2{
+  font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.05em;
+  text-transform:uppercase;margin:0 0 4px;line-height:1.1;
+}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+
+/* ---------- fields ---------- */
+.field{margin-bottom:14px}
+label{
+  display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:6px;
+}
+input[type=text],input[type=date],textarea,select{
+  width:100%;background:var(--panel);color:var(--cream);
+  border:1px solid var(--line);border-radius:3px;
+  padding:11px 12px;font-family:var(--body);font-size:16px;
+  appearance:none;
+}
+textarea{resize:vertical;min-height:76px;line-height:1.45}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--brass);outline-offset:1px;border-color:var(--brass)}
+select{background-image:none}
+
+/* ---------- flag picker ---------- */
+.flags{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.flag{
+  background:var(--panel);border:1px solid var(--line);border-radius:3px;
+  color:var(--muted);padding:10px 4px;cursor:pointer;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;
+  text-transform:uppercase;line-height:1.3;
+}
+.flag[aria-pressed=true]{color:var(--ink);font-weight:500}
+.flag[data-v="note"][aria-pressed=true]{background:var(--muted);border-color:var(--muted)}
+.flag[data-v="dig"][aria-pressed=true]{background:var(--brass);border-color:var(--brass)}
+.flag[data-v="do"][aria-pressed=true]{background:var(--green);border-color:var(--green)}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:block;width:100%;border:0;border-radius:3px;cursor:pointer;
+  font-family:var(--disp);font-size:19px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;padding:14px;
+}
+.btn-primary{background:var(--brass);color:#12100A}
+.btn-primary:active{background:#B0842F}
+.btn-ghost{
+  background:transparent;color:var(--muted);border:1px solid var(--line);
+  font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.1em;padding:11px;
+}
+.btn-ghost:active{color:var(--cream);border-color:var(--brass)}
+.btn-row{display:flex;gap:8px;margin-top:10px}
+.btn-row .btn{flex:1}
+
+/* ---------- expander ---------- */
+details.more{margin:4px 0 18px;border-top:1px solid var(--line);padding-top:14px}
+details.more>summary{
+  list-style:none;cursor:pointer;font-family:var(--mono);font-size:11px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--brass);
+  display:flex;align-items:center;gap:8px;padding:2px 0;
+}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"+";font-size:15px;line-height:1;margin-left:auto;color:var(--brass)}
+details.more[open]>summary::after{content:"\2212"}
+.more-body{padding-top:14px}
+
+/* ---------- entry list ---------- */
+.search{margin-bottom:16px}
+.entry{
+  display:flex;gap:12px;background:var(--panel);
+  border:1px solid var(--line);border-left:3px solid var(--brass-dim);
+  border-radius:3px;padding:12px 13px;margin-bottom:8px;cursor:pointer;
+}
+.entry[data-flag=do]{border-left-color:var(--green)}
+.entry[data-flag=dig]{border-left-color:var(--brass)}
+.entry[data-flag=note]{border-left-color:var(--line)}
+.idx{font-family:var(--mono);font-size:11px;color:var(--muted);padding-top:3px;flex:none}
+.entry-main{min-width:0;flex:1}
+.entry-name{font-family:var(--disp);font-size:20px;font-weight:600;letter-spacing:.03em;line-height:1.15}
+.entry-trade{font-size:13.5px;color:var(--brass);margin-top:1px}
+.entry-meta{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:5px;letter-spacing:.05em}
+.entry-snip{
+  font-size:13.5px;color:var(--muted);margin-top:6px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.entry.open{background:var(--panel2);cursor:default}
+.entry.open .entry-snip{-webkit-line-clamp:unset;color:var(--cream)}
+.detail{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.dl{margin:0 0 11px}
+.dl dt{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.dl dd{margin:0;font-size:14.5px;line-height:1.45;white-space:pre-wrap}
+
+/* ---------- patterns ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:15px;margin-bottom:12px}
+.stat-row{display:flex;gap:10px;margin-bottom:12px}
+.stat{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:12px 10px;text-align:center}
+.stat b{display:block;font-family:var(--disp);font-size:34px;font-weight:700;line-height:1;color:var(--brass)}
+.stat.go b{color:var(--green)}
+.stat span{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-top:6px}
+.bar{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:14px}
+.bar-fill{height:5px;background:var(--brass);border-radius:2px;flex:none;min-width:5px}
+.bar-n{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto;flex:none}
+.quote{border-left:2px solid var(--line);padding-left:11px;margin:0 0 11px;font-size:14px;line-height:1.45}
+.quote cite{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);font-style:normal;margin-top:4px;text-transform:uppercase}
+
+/* ---------- empty / toast / modal ---------- */
+.empty{border:1px dashed var(--line);border-radius:3px;padding:26px 18px;text-align:center;color:var(--muted);font-size:14px}
+.empty strong{display:block;font-family:var(--disp);font-size:20px;letter-spacing:.05em;text-transform:uppercase;color:var(--cream);margin-bottom:6px}
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:28px;
+  background:var(--brass);color:#12100A;padding:10px 18px;border-radius:3px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.06em;z-index:50;
+  opacity:0;pointer-events:none;transition:opacity .18s;
+}
+#toast.show{opacity:1}
+#modal{position:fixed;inset:0;background:rgba(6,11,18,.9);z-index:60;display:none;padding:20px;overflow:auto}
+#modal.show{display:block}
+.modal-inner{max-width:640px;margin:24px auto;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px}
+#exportText{width:100%;height:44vh;font-family:var(--mono);font-size:12px;line-height:1.5}
+
+/* ---------- bottom nav ---------- */
+nav{position:sticky;top:0;z-index:40;background:#0B131E;border-bottom:1px solid var(--line);display:flex;margin-bottom:20px}
+nav button{flex:1;background:none;border:0;cursor:pointer;padding:14px 4px;color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid transparent}
+nav button[aria-current=true]{color:var(--brass);border-bottom-color:var(--brass)}
+
+.view{display:none}
+.view.active{display:block}
+.hidden{display:none !important}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap brand">
+    <h1>Field Notes<span class="dot">.</span></h1>
+    <div class="tally" id="tally">Loading</div>
+  </div>
+</header>
+
+<nav>
+  <button data-view="log" aria-current="true">Log</button>
+  <button data-view="entries" aria-current="false">Entries</button>
+  <button data-view="patterns" aria-current="false">Patterns</button>
+</nav>
+
+<main class="wrap">
+
+  <!-- ============ LOG ============ -->
+  <section class="view active" id="view-log">
+    <p class="eyebrow" id="logEyebrow">New entry</p>
+    <h2 id="logTitle">Who'd you talk to?</h2>
+    <p class="sub">Get the four quick ones down now. Fill in the rest whenever.</p>
+
+    <div class="field">
+      <label for="f-name">Name</label>
+      <input type="text" id="f-name" placeholder="Dave at the Rockford counter" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label for="f-trade">What they do for a living</label>
+      <input type="text" id="f-trade" placeholder="Mobile welding rig" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label for="f-notes">What stuck with you</label>
+      <textarea id="f-notes" placeholder="Said he clears more in three winter months than all summer..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Where this lands</label>
+      <div class="flags">
+        <button class="flag" data-v="note" aria-pressed="false">Just<br>interesting</button>
+        <button class="flag" data-v="dig" aria-pressed="false">Worth<br>digging into</button>
+        <button class="flag" data-v="do" aria-pressed="false">I could<br>do this</button>
+      </div>
+    </div>
+
+    <details class="more">
+      <summary>Add the detail</summary>
+      <div class="more-body">
+        <div class="field">
+          <label for="f-where">Where you met</label>
+          <input type="text" id="f-where" placeholder="Dealer, race, parts counter" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-start">How they got started</label>
+          <textarea id="f-start"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-cost">What it took to start</label>
+          <textarea id="f-cost" placeholder="Money, tools, licenses, time"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-likes">What they like about it</label>
+          <textarea id="f-likes"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-warn">What they warned you about</label>
+          <textarea id="f-warn"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-money">Shape of the income</label>
+          <select id="f-money">
+            <option value="">—</option>
+            <option>Side income</option>
+            <option>Full-time</option>
+            <option>Seasonal</option>
+            <option>Winding down</option>
+            <option>Didn't say</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-fit">Could you do this?</label>
+          <textarea id="f-fit" placeholder="What you'd already have covered, what you'd have to learn"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-ask">Ask next time</label>
+          <textarea id="f-ask" placeholder="The question you thought of on the drive home"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-date">Date</label>
+          <input type="date" id="f-date">
+        </div>
+      </div>
+    </details>
+
+    <button class="btn btn-primary" id="saveBtn">Save entry</button>
+    <div class="btn-row hidden" id="editRow">
+      <button class="btn btn-ghost" id="cancelEdit">Cancel</button>
+      <button class="btn btn-ghost" id="deleteEntry" style="color:#B4614F">Delete</button>
+    </div>
+  </section>
+
+  <!-- ============ ENTRIES ============ -->
+  <section class="view" id="view-entries">
+    <p class="eyebrow">The log</p>
+    <h2>Every conversation</h2>
+    <p class="sub">Tap any entry to open it up or make changes.</p>
+    <div class="field search">
+      <input type="text" id="search" placeholder="Search names, trades, notes" autocomplete="off">
+    </div>
+    <div id="entryList"></div>
+  </section>
+
+  <!-- ============ PATTERNS ============ -->
+  <section class="view" id="view-patterns">
+    <p class="eyebrow">What's repeating</p>
+    <h2>Patterns</h2>
+    <p class="sub">Counted straight from your entries. Send the whole log to Claude when you want the real read on it.</p>
+    <div id="patternBody"></div>
+    <button class="btn btn-primary" id="exportBtn" style="margin-top:6px">Send log to Claude</button>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="backupBtn">Save backup</button>
+      <button class="btn btn-ghost" id="restoreBtn">Restore backup</button>
+    </div>
+    <input type="file" id="restoreFile" accept="application/json,.json" class="hidden">
+  </section>
+
+</main>
+
+
+<div id="toast"></div>
+
+<div id="modal">
+  <div class="modal-inner">
+    <p class="eyebrow">Copy this into a chat with Claude</p>
+    <h2 style="margin-bottom:12px">Your log</h2>
+    <textarea id="exportText" readonly></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="copyBtn">Copy</button>
+      <button class="btn btn-ghost" id="closeModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'fieldnotes:v1';
+
+function _race(p,ms){return Promise.race([p,new Promise((_,rj)=>setTimeout(()=>rj(new Error('storage timeout')),ms))]);}
+let storageOK=true;
+const _LS={
+  async get(k){const v=localStorage.getItem(k);if(v===null)throw new Error('missing');return {key:k,value:v};},
+  async set(k,v){localStorage.setItem(k,v);return {key:k,value:v};}
+};
+function _store(){return (typeof window!=='undefined'&&window.storage&&window.storage.get)?window.storage:_LS;}
+async function _sget(k){return await _race(_store().get(k),5000);}
+async function _sset(k,v){return await _race(_store().set(k,v),8000);}
+const FLAGS = { note:'Just interesting', dig:'Worth digging into', do:'I could do this' };
+let state = { entries: [], next: 1 };
+let flag = 'note';
+let editingId = null;
+let openId = null;
+
+const $ = id => document.getElementById(id);
+const F = {
+  name:$('f-name'), trade:$('f-trade'), notes:$('f-notes'), where:$('f-where'),
+  start:$('f-start'), cost:$('f-cost'), likes:$('f-likes'), warn:$('f-warn'),
+  money:$('f-money'), fit:$('f-fit'), ask:$('f-ask'), date:$('f-date')
+};
+const DETAIL_LABELS = {
+  where:'Where you met', start:'How they got started', cost:'What it took to start',
+  likes:'What they like', warn:'What they warned about', money:'Shape of the income',
+  fit:'Could I do this', ask:'Ask next time'
+};
+
+function esc(s){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function todayISO(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); }
+function prettyDate(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-').map(Number);
+  return new Date(y,m-1,d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+}
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+/* ---------- storage ---------- */
+async function loadState(){
+  try{
+    const r = await _sget(KEY);
+    if(r && r.value){ const p = JSON.parse(r.value); if(Array.isArray(p.entries)) state = p; }
+  }catch(e){ /* first run, no key yet */ }
+}
+async function saveState(){
+  try{
+    const r = await _sset(KEY, JSON.stringify(state));
+    if(!r){ toast("Couldn't save — try again"); return false; }
+    return true;
+  }catch(e){ toast("Couldn't save — try again"); return false; }
+}
+
+/* ---------- form ---------- */
+function setFlag(v){
+  flag = v;
+  document.querySelectorAll('.flag').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+}
+function clearForm(){
+  Object.values(F).forEach(el => el.value = '');
+  F.date.value = todayISO();
+  setFlag('note');
+  editingId = null;
+  $('logTitle').textContent = "Who'd you talk to?";
+  $('logEyebrow').textContent = 'New entry';
+  $('saveBtn').textContent = 'Save entry';
+  $('editRow').classList.add('hidden');
+  document.querySelector('details.more').open = false;
+}
+function fillForm(e){
+  Object.keys(F).forEach(k => F[k].value = e[k] || '');
+  F.date.value = e.date || todayISO();
+  setFlag(e.flag || 'note');
+  editingId = e.id;
+  $('logTitle').textContent = 'Editing #' + String(e.idx).padStart(3,'0');
+  $('logEyebrow').textContent = e.name || 'Entry';
+  $('saveBtn').textContent = 'Save changes';
+  $('editRow').classList.remove('hidden');
+  document.querySelector('details.more').open = true;
+  showView('log');
+  window.scrollTo(0,0);
+}
+
+async function handleSave(){
+  if(!F.name.value.trim() && !F.trade.value.trim()){
+    toast('Add a name or a trade first'); F.name.focus(); return;
+  }
+  const data = {};
+  Object.keys(F).forEach(k => data[k] = F[k].value.trim());
+  data.flag = flag;
+  data.date = data.date || todayISO();
+
+  if(editingId){
+    const i = state.entries.findIndex(x => x.id === editingId);
+    if(i > -1) state.entries[i] = Object.assign({}, state.entries[i], data);
+  }else{
+    data.id = 'e' + Date.now() + Math.random().toString(36).slice(2,6);
+    data.idx = state.next;
+    state.next += 1;
+    state.entries.push(data);
+  }
+  const ok = await saveState();
+  if(!ok) return;
+  toast(editingId ? 'Changes saved' : 'Entry ' + String(data.idx || '').padStart(3,'0') + ' saved');
+  clearForm();
+  renderAll();
+}
+
+async function handleDelete(){
+  if(!editingId) return;
+  const e = state.entries.find(x => x.id === editingId);
+  if(!confirm('Delete the entry for ' + (e && e.name ? e.name : 'this person') + '? This cannot be undone.')) return;
+  state.entries = state.entries.filter(x => x.id !== editingId);
+  const ok = await saveState();
+  if(!ok) return;
+  toast('Entry deleted');
+  clearForm();
+  renderAll();
+}
+
+/* ---------- entries ---------- */
+function sorted(){
+  return state.entries.slice().sort((a,b) => (b.date||'').localeCompare(a.date||'') || b.idx - a.idx);
+}
+function renderEntries(){
+  const q = $('search').value.trim().toLowerCase();
+  const list = sorted().filter(e => !q || Object.values(e).join(' ').toLowerCase().includes(q));
+  const box = $('entryList');
+
+  if(!state.entries.length){
+    box.innerHTML = '<div class="empty"><strong>Nothing logged yet</strong>The next time somebody tells you what they do for a living, put it here before you pull out of the lot.</div>';
+    return;
+  }
+  if(!list.length){ box.innerHTML = '<div class="empty"><strong>No matches</strong>Try a different word.</div>'; return; }
+
+  box.innerHTML = list.map(e => {
+    const open = e.id === openId;
+    let detail = '';
+    if(open){
+      const rows = Object.keys(DETAIL_LABELS)
+        .filter(k => e[k])
+        .map(k => '<dl class="dl"><dt>' + DETAIL_LABELS[k] + '</dt><dd>' + esc(e[k]) + '</dd></dl>').join('');
+      detail = '<div class="detail">' + (rows || '<p class="sub" style="margin:0 0 10px">No detail filled in yet.</p>') +
+        '<button class="btn btn-ghost" data-edit="' + e.id + '">Open in the form</button></div>';
+    }
+    return '<article class="entry' + (open ? ' open' : '') + '" data-flag="' + e.flag + '" data-id="' + e.id + '">' +
+      '<span class="idx">#' + String(e.idx).padStart(3,'0') + '</span>' +
+      '<div class="entry-main">' +
+        '<div class="entry-name">' + esc(e.name || 'Unnamed') + '</div>' +
+        (e.trade ? '<div class="entry-trade">' + esc(e.trade) + '</div>' : '') +
+        '<div class="entry-meta">' + prettyDate(e.date) + ' &nbsp;·&nbsp; ' + FLAGS[e.flag] + (e.where ? ' &nbsp;·&nbsp; ' + esc(e.where) : '') + '</div>' +
+        (e.notes ? '<div class="entry-snip">' + esc(e.notes) + '</div>' : '') +
+        detail +
+      '</div></article>';
+  }).join('');
+}
+
+/* ---------- patterns ---------- */
+function renderPatterns(){
+  const box = $('patternBody');
+  const n = state.entries.length;
+  if(!n){
+    box.innerHTML = '<div class="empty"><strong>Patterns show up around ten</strong>Log a handful of conversations and this page starts earning its keep.</div>';
+    return;
+  }
+  const count = f => state.entries.filter(e => e.flag === f).length;
+
+  const trades = {};
+  state.entries.forEach(e => {
+    if(!e.trade) return;
+    const k = e.trade.trim().toLowerCase();
+    if(!trades[k]) trades[k] = { label:e.trade.trim(), n:0 };
+    trades[k].n++;
+  });
+  const ranked = Object.values(trades).sort((a,b) => b.n - a.n).slice(0,8);
+  const max = ranked.length ? ranked[0].n : 1;
+
+  const dates = state.entries.map(e => e.date).filter(Boolean).sort();
+  const span = dates.length ? prettyDate(dates[0]) + ' – ' + prettyDate(dates[dates.length-1]) : '';
+
+  let html = '<div class="stat-row">' +
+    '<div class="stat"><b>' + n + '</b><span>Logged</span></div>' +
+    '<div class="stat"><b>' + count('dig') + '</b><span>To dig into</span></div>' +
+    '<div class="stat go"><b>' + count('do') + '</b><span>Could do</span></div></div>' +
+    (span ? '<p class="sub" style="font-family:var(--mono);font-size:11px;letter-spacing:.06em">' + span + '</p>' : '');
+
+  if(ranked.length){
+    html += '<div class="card"><p class="eyebrow">Trades you keep running into</p>' +
+      ranked.map(t => '<div class="bar"><span class="bar-fill" style="width:' + Math.round(t.n/max*90) + 'px"></span>' +
+        esc(t.label) + '<span class="bar-n">' + t.n + '</span></div>').join('') + '</div>';
+  }
+
+  const doable = state.entries.filter(e => e.flag === 'do');
+  if(doable.length){
+    html += '<div class="card"><p class="eyebrow">You said you could do these</p>' +
+      doable.map(e => '<p class="quote">' + esc(e.trade || e.name) + (e.fit ? ' — ' + esc(e.fit) : '') +
+        '<cite>#' + String(e.idx).padStart(3,'0') + ' · ' + esc(e.name || '') + '</cite></p>').join('') + '</div>';
+  }
+
+  const warns = state.entries.filter(e => e.warn);
+  if(warns.length){
+    html += '<div class="card"><p class="eyebrow">Every warning you\'ve been given</p>' +
+      warns.map(e => '<p class="quote">' + esc(e.warn) +
+        '<cite>' + esc(e.name || '') + ' · ' + esc(e.trade || '') + '</cite></p>').join('') + '</div>';
+  }
+
+  const asks = state.entries.filter(e => e.ask);
+  if(asks.length){
+    html += '<div class="card"><p class="eyebrow">Questions you still owe people</p>' +
+      asks.map(e => '<p class="quote">' + esc(e.ask) +
+        '<cite>Ask ' + esc(e.name || 'them') + '</cite></p>').join('') + '</div>';
+  }
+  box.innerHTML = html;
+}
+
+/* ---------- export ---------- */
+function buildExport(){
+  const list = sorted().slice().reverse();
+  const dates = state.entries.map(e => e.date).filter(Boolean).sort();
+  let out = 'FIELD NOTES — ' + state.entries.length + ' conversations';
+  if(dates.length) out += ', ' + prettyDate(dates[0]) + ' to ' + prettyDate(dates[dates.length-1]);
+  out += '\n\nEach entry is a person I talked to about how they make a living.\n';
+  out += 'Flag meanings: NOTE = just interesting, DIG = worth digging into, DO = I could see myself doing this.\n\n';
+
+  list.forEach(e => {
+    out += '─────────────────────────────\n';
+    out += '#' + String(e.idx).padStart(3,'0') + '  ' + (e.date || '') + '  [' + (e.flag || 'note').toUpperCase() + ']\n';
+    out += (e.name || 'Unnamed') + (e.trade ? ' — ' + e.trade : '') + '\n';
+    Object.keys(DETAIL_LABELS).forEach(k => { if(e[k]) out += DETAIL_LABELS[k] + ': ' + e[k] + '\n'; });
+    if(e.notes) out += 'What stuck: ' + e.notes + '\n';
+  });
+  out += '─────────────────────────────\n\nWhat I want from this: help me find the patterns and figure out what I could realistically start.\n';
+  return out;
+}
+function openExport(){
+  if(!state.entries.length){ toast('Nothing to send yet'); return; }
+  $('exportText').value = buildExport();
+  $('modal').classList.add('show');
+}
+async function copyExport(){
+  const ta = $('exportText');
+  try{
+    await navigator.clipboard.writeText(ta.value);
+    toast('Copied — paste it to Claude');
+  }catch(e){
+    ta.focus(); ta.setSelectionRange(0, ta.value.length);
+    toast('Select all and copy');
+  }
+}
+function backup(){
+  if(!state.entries.length){ toast('Nothing to back up yet'); return; }
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'field-notes-' + todayISO() + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('Backup saved');
+}
+function restore(file){
+  const r = new FileReader();
+  r.onload = async () => {
+    try{
+      const p = JSON.parse(r.result);
+      if(!Array.isArray(p.entries)) throw new Error('bad file');
+      const have = new Set(state.entries.map(e => e.id));
+      let added = 0;
+      p.entries.forEach(e => { if(e.id && !have.has(e.id)){ state.entries.push(e); added++; } });
+      state.next = Math.max(state.next, p.next || 1, ...state.entries.map(e => (e.idx||0)+1));
+      if(await saveState()){ toast(added + ' entries restored'); renderAll(); }
+    }catch(err){ toast("That file didn't read as a backup"); }
+  };
+  r.readAsText(file);
+}
+
+/* ---------- shell ---------- */
+function showView(v){
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
+  document.querySelectorAll('nav button').forEach(b => b.setAttribute('aria-current', String(b.dataset.view === v)));
+}
+function renderAll(){
+  const n = state.entries.length;
+  const doable = state.entries.filter(e => e.flag === 'do').length;
+  $('tally').innerHTML = '<b>' + n + '</b> logged<br>' + doable + ' worth doing';
+  renderEntries();
+  renderPatterns();
+}
+
+document.querySelectorAll('.flag').forEach(b => b.addEventListener('click', () => setFlag(b.dataset.v)));
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+$('saveBtn').addEventListener('click', handleSave);
+$('deleteEntry').addEventListener('click', handleDelete);
+$('cancelEdit').addEventListener('click', () => { clearForm(); toast('Edit cancelled'); });
+$('search').addEventListener('input', renderEntries);
+$('exportBtn').addEventListener('click', openExport);
+$('copyBtn').addEventListener('click', copyExport);
+$('closeModal').addEventListener('click', () => $('modal').classList.remove('show'));
+$('backupBtn').addEventListener('click', backup);
+$('restoreBtn').addEventListener('click', () => $('restoreFile').click());
+$('restoreFile').addEventListener('change', ev => { if(ev.target.files[0]) restore(ev.target.files[0]); ev.target.value=''; });
+
+$('entryList').addEventListener('click', ev => {
+  const edit = ev.target.closest('[data-edit]');
+  if(edit){
+    const e = state.entries.find(x => x.id === edit.dataset.edit);
+    if(e) fillForm(e);
+    return;
+  }
+  const card = ev.target.closest('.entry');
+  if(!card) return;
+  openId = (openId === card.dataset.id) ? null : card.dataset.id;
+  renderEntries();
+});
+
+(async function init(){
+  F.date.value = todayISO();
+  setFlag('note');
+  renderAll();
+  await loadState();
+  renderAll();
+  if(!storageOK)toast('Saved data unavailable — entries may not persist');
+})();
+</script>
+</body>
+</html>

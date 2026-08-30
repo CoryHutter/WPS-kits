@@ -146,7 +146,7 @@ window.addEventListener('unhandledrejection',function(e){
   <div class="wrap brand">
     <div>
       <h1>Program Match<span class="dot">.</span></h1>
-      <div class="build">Build 7 · tap to open a program</div>
+      <div class="build">Build 8 · flyers attached</div>
     </div>
     <div class="tally" id="tally">Loading</div>
   </div>
@@ -325,29 +325,29 @@ const BASE_BRANDS=['Fly Racing','Fire Power','KFI','Open Trail','Michelin','Dunl
 
 const IMGKEY='programmatch:img:v1';
 const BUILT_IN=[
-  {"name": "All Balls Racing — spend $750, pick a display item", "detail": "Spend $750 on All Balls branded product, get one of: slat wall graphics, floor mat, polos (4 per program), or wall tin. Must scan QR to redeem — does not apply automatically.", "brands": ["All Balls Racing"], "ends": "2026-08-31", "min": "$750"},
-  {"name": "Bel-Ray aerosols — buy 8 get 4 free", "detail": "Select aerosols: 6 In 1, Blue Tac chain lube, foam filter cleaner, foam filter oil, Super Clean chain lube. No mix and matching. Least expensive item free. Combines with dealer lock-in. Backorders cannot be cancelled.", "brands": ["Bel-Ray"], "ends": "2026-08-31", "min": "8 cans, single item"},
-  {"name": "Bel-Ray bag-in-a-box — buy 9 get 3 free", "detail": "Select 6-gal bag in a box: shop oil 10W-40 and 20W-50, ATV/SXS syn 5W-50, primary chaincase, V-twin syn and semi-syn, big twin trans. Least expensive free. Combines with lock-in.", "brands": ["Bel-Ray"], "ends": "2026-08-31", "min": "9 boxes"},
-  {"name": "Bridgestone Battlax — buy 4 get 1 free", "detail": "Battlax and Battlax Hypersport (S21, S22, S23, RS10, RS11, RS12). Least expensive tire free. Combines with dealer lock-in. Backorders OK but cannot be cancelled.", "brands": ["Bridgestone"], "ends": "2026-08-31", "min": "4 tires"},
-  {"name": "Fire Power batteries — free rack and charger tiers", "detail": "$250 buy = battery rack and banner. $400 = rack and 12V/2A charger. $1200 = rack and 5-bank charger. Cannot combine with any other program. No mix and match with HardDrive batteries.", "brands": ["Fire Power"], "ends": "2026-08-31", "min": "$250 / $400 / $1200"},
-  {"name": "Fire Power batteries — free ring terminal cables", "detail": "Purchase $400 in Fire Power batteries, get one 25-pack ring terminal cables free (490-2905). Four programs per dealer. Cannot combine with other programs.", "brands": ["Fire Power"], "ends": "2026-08-31", "min": "$400"},
-  {"name": "Open Trail winch mount for $9.99", "detail": "Buy any brand winch, get one qualifying Open Trail mount for $9.99. Must be on one order, no backorders. Does not apply automatically.", "brands": ["Open Trail", "KFI"], "ends": "2026-08-31", "min": "1 winch"},
-  {"name": "HardDrive batteries — free rack and charger tiers", "detail": "Select high-performance batteries. $250 = rack. $400 = rack and charger. $1200 = rack and 5-bank charger. No mix and match with Fire Power batteries.", "brands": ["HardDrive"], "ends": "2026-08-31", "min": "$250 / $400 / $1200"},
-  {"name": "POD knee braces — 10% pairs, 7% singles", "detail": "Select K4 2.0 LE and K4 V2.0 pairs 10% off, select singles 7% off. Discount applies automatically. No MAP as of August 1.", "brands": ["POD"], "ends": "2026-08-31", "min": ""},
-  {"name": "Red Bull — 15% off", "detail": "All flavors, dealer $53.10 against $79.95 list.", "brands": ["Red Bull"], "ends": "2026-08-31", "min": ""},
-  {"name": "Rheon armor — 10% off", "detail": "Level 2 shoulder/hip pair, curved knee pair, and K/E/S/H protection pair. Dealer $25.96 against $39.95 list.", "brands": ["Rheon"], "ends": "2026-08-31", "min": ""},
-  {"name": "RST jeans — buy 5, 10% off or extra 2%", "detail": "Buy 5 at standard dealer on one order: 10% off, or an extra 2% on top of dealer lock-in. Straight leg, tapered, Kevlar Tech Pro, and womens. Mix and match OK, must be one order.", "brands": ["RST"], "ends": "2026-08-31", "min": "5 units, one order"},
-  {"name": "Scorpion EXO jeans — buy 5, 10% off or extra 2%", "detail": "Covert II CE jeans, Covert CE chinos with Rheon, Covert CE Pro II. Buy 5 at standard dealer on one order. Mix and match OK.", "brands": ["Scorpion EXO"], "ends": "2026-08-31", "min": "5 units, one order"},
-  {"name": "Shock Sox — buy 10 sets, free dealer board", "detail": "Buy 10 sets, get the authorized dealer board free (WPS# 802121). Order through the sales rep or customer service.", "brands": ["Shock Sox"], "ends": "2026-08-31", "min": "10 sets"},
-  {"name": "System 3 tires and wheels — extra 5%", "detail": "SS360 and SS365 tires, and SB8 wheels, get an extra 5% on top of dealer lock-in. Excludes wheel kits. Does not apply automatically.", "brands": ["System 3"], "ends": "2026-08-31", "min": ""},
-  {"name": "System 3 select tires — 20% off", "detail": "RX600 37x10R-15 (3-1479), ATX470 37x10R15 (3-1272), XT400W 30x12R15 (3-0857). No backorders.", "brands": ["System 3"], "ends": "2026-08-31", "min": ""},
-  {"name": "HardDrive air intakes — 20% off", "detail": "Kruel air cleaner kit, black contrast cut and chrome. No backorders, while supplies last.", "brands": ["HardDrive"], "ends": "2026-08-31", "min": ""},
-  {"name": "ODI grips — 8% off", "detail": "Select Lock-On Ruffian grips, CVO '23-24. No backorders, while supplies last.", "brands": ["ODI"], "ends": "2026-08-31", "min": ""},
-  {"name": "Santoro Fabworx bag delete — 8% off", "detail": "Chonies bag deletes, carbon dip and ABS. No backorders, while supplies last.", "brands": ["Santoro Fabworx"], "ends": "2026-08-31", "min": ""},
-  {"name": "Cobra air intakes — 7% off", "detail": "Select Cone, Powerflo, and RPT air intake systems. No backorders, while supplies last.", "brands": ["Cobra"], "ends": "2026-08-31", "min": ""},
-  {"name": "Puig spoilers — 5% off", "detail": "Select downforce, race side, and sport side spoilers. No backorders, while supplies last.", "brands": ["Puig"], "ends": "2026-08-31", "min": ""},
-  {"name": "Back to School — Alpinestars and DBK up to 30% off", "detail": "Tees, hoodies, hats, and socks. Minimum purchase of 3 items, mix and matching OK. Runs Aug 10-31. Discounts must be specifically requested.", "brands": ["Alpinestars", "DBK"], "ends": "2026-08-31", "min": "3 items"},
-  {"name": "Fire Power jug and hose program", "detail": "4-16 jugs: no discount, one free push-in filler hose per jug. 20-56 jugs: up to 5% off plus free hose. 60+ (pallet, multiples of 60): up to 10% off plus free hose. Multiples of 4 same color. Upgraded hoses available at $3.25 screw cap or $4.25 reinforced. No expiration — updated August 2026.", "brands": ["Fire Power"], "ends": "", "min": "4 jugs, multiples of 4"}
+  {"name": "All Balls Racing — spend $750, pick a display item", "detail": "Spend $750 on All Balls branded product, get one of: slat wall graphics, floor mat, polos (4 per program), or wall tin. Must scan QR to redeem — does not apply automatically.", "brands": ["All Balls Racing"], "ends": "2026-08-31", "min": "$750", "img": "all-balls-display.jpg"},
+  {"name": "Bel-Ray aerosols — buy 8 get 4 free", "detail": "Select aerosols: 6 In 1, Blue Tac chain lube, foam filter cleaner, foam filter oil, Super Clean chain lube. No mix and matching. Least expensive item free. Combines with dealer lock-in. Backorders cannot be cancelled.", "brands": ["Bel-Ray"], "ends": "2026-08-31", "min": "8 cans, single item", "img": "bel-ray-aerosols.jpg"},
+  {"name": "Bel-Ray bag-in-a-box — buy 9 get 3 free", "detail": "Select 6-gal bag in a box: shop oil 10W-40 and 20W-50, ATV/SXS syn 5W-50, primary chaincase, V-twin syn and semi-syn, big twin trans. Least expensive free. Combines with lock-in.", "brands": ["Bel-Ray"], "ends": "2026-08-31", "min": "9 boxes", "img": "bel-ray-bag-in-box.jpg"},
+  {"name": "Bridgestone Battlax — buy 4 get 1 free", "detail": "Battlax and Battlax Hypersport (S21, S22, S23, RS10, RS11, RS12). Least expensive tire free. Combines with dealer lock-in. Backorders OK but cannot be cancelled.", "brands": ["Bridgestone"], "ends": "2026-08-31", "min": "4 tires", "img": "bridgestone-battlax.jpg"},
+  {"name": "Fire Power batteries — free rack and charger tiers", "detail": "$250 buy = battery rack and banner. $400 = rack and 12V/2A charger. $1200 = rack and 5-bank charger. Cannot combine with any other program. No mix and match with HardDrive batteries.", "brands": ["Fire Power"], "ends": "2026-08-31", "min": "$250 / $400 / $1200", "img": "fire-power-batteries.jpg"},
+  {"name": "Fire Power batteries — free ring terminal cables", "detail": "Purchase $400 in Fire Power batteries, get one 25-pack ring terminal cables free (490-2905). Four programs per dealer. Cannot combine with other programs.", "brands": ["Fire Power"], "ends": "2026-08-31", "min": "$400", "img": "fire-power-ring-terminals-and-open-trail-winch-mount.jpg"},
+  {"name": "Open Trail winch mount for $9.99", "detail": "Buy any brand winch, get one qualifying Open Trail mount for $9.99. Must be on one order, no backorders. Does not apply automatically.", "brands": ["Open Trail", "KFI"], "ends": "2026-08-31", "min": "1 winch", "img": "fire-power-ring-terminals-and-open-trail-winch-mount.jpg"},
+  {"name": "HardDrive batteries — free rack and charger tiers", "detail": "Select high-performance batteries. $250 = rack. $400 = rack and charger. $1200 = rack and 5-bank charger. No mix and match with Fire Power batteries.", "brands": ["HardDrive"], "ends": "2026-08-31", "min": "$250 / $400 / $1200", "img": "harddrive-batteries.jpg"},
+  {"name": "POD knee braces — 10% pairs, 7% singles", "detail": "Select K4 2.0 LE and K4 V2.0 pairs 10% off, select singles 7% off. Discount applies automatically. No MAP as of August 1.", "brands": ["POD"], "ends": "2026-08-31", "min": "", "img": "pod-knee-braces.jpg"},
+  {"name": "Red Bull — 15% off", "detail": "All flavors, dealer $53.10 against $79.95 list.", "brands": ["Red Bull"], "ends": "2026-08-31", "min": "", "img": "red-bull.jpg"},
+  {"name": "Rheon armor — 10% off", "detail": "Level 2 shoulder/hip pair, curved knee pair, and K/E/S/H protection pair. Dealer $25.96 against $39.95 list.", "brands": ["Rheon"], "ends": "2026-08-31", "min": "", "img": "rheon-armor.jpg"},
+  {"name": "RST jeans — buy 5, 10% off or extra 2%", "detail": "Buy 5 at standard dealer on one order: 10% off, or an extra 2% on top of dealer lock-in. Straight leg, tapered, Kevlar Tech Pro, and womens. Mix and match OK, must be one order.", "brands": ["RST"], "ends": "2026-08-31", "min": "5 units, one order", "img": "rst-jeans.jpg"},
+  {"name": "Scorpion EXO jeans — buy 5, 10% off or extra 2%", "detail": "Covert II CE jeans, Covert CE chinos with Rheon, Covert CE Pro II. Buy 5 at standard dealer on one order. Mix and match OK.", "brands": ["Scorpion EXO"], "ends": "2026-08-31", "min": "5 units, one order", "img": "scorpion-exo-jeans.jpg"},
+  {"name": "Shock Sox — buy 10 sets, free dealer board", "detail": "Buy 10 sets, get the authorized dealer board free (WPS# 802121). Order through the sales rep or customer service.", "brands": ["Shock Sox"], "ends": "2026-08-31", "min": "10 sets", "img": "shock-sox-dealer-board.jpg"},
+  {"name": "System 3 tires and wheels — extra 5%", "detail": "SS360 and SS365 tires, and SB8 wheels, get an extra 5% on top of dealer lock-in. Excludes wheel kits. Does not apply automatically.", "brands": ["System 3"], "ends": "2026-08-31", "min": "", "img": "system3-tires-wheels.jpg"},
+  {"name": "System 3 select tires — 20% off", "detail": "RX600 37x10R-15 (3-1479), ATX470 37x10R15 (3-1272), XT400W 30x12R15 (3-0857). No backorders.", "brands": ["System 3"], "ends": "2026-08-31", "min": "", "img": "system3-20-percent.jpg"},
+  {"name": "HardDrive air intakes — 20% off", "detail": "Kruel air cleaner kit, black contrast cut and chrome. No backorders, while supplies last.", "brands": ["HardDrive"], "ends": "2026-08-31", "min": "", "img": "harddrive-odi-santoro.jpg"},
+  {"name": "ODI grips — 8% off", "detail": "Select Lock-On Ruffian grips, CVO '23-24. No backorders, while supplies last.", "brands": ["ODI"], "ends": "2026-08-31", "min": "", "img": "harddrive-odi-santoro.jpg"},
+  {"name": "Santoro Fabworx bag delete — 8% off", "detail": "Chonies bag deletes, carbon dip and ABS. No backorders, while supplies last.", "brands": ["Santoro Fabworx"], "ends": "2026-08-31", "min": "", "img": "harddrive-odi-santoro.jpg"},
+  {"name": "Cobra air intakes — 7% off", "detail": "Select Cone, Powerflo, and RPT air intake systems. No backorders, while supplies last.", "brands": ["Cobra"], "ends": "2026-08-31", "min": "", "img": "cobra-puig.jpg"},
+  {"name": "Puig spoilers — 5% off", "detail": "Select downforce, race side, and sport side spoilers. No backorders, while supplies last.", "brands": ["Puig"], "ends": "2026-08-31", "min": "", "img": "cobra-puig.jpg"},
+  {"name": "Back to School — Alpinestars and DBK up to 30% off", "detail": "Tees, hoodies, hats, and socks. Minimum purchase of 3 items, mix and matching OK. Runs Aug 10-31. Discounts must be specifically requested.", "brands": ["Alpinestars", "DBK"], "ends": "2026-08-31", "min": "3 items", "img": "back-to-school-alpinestars-tees.jpg"},
+  {"name": "Fire Power jug and hose program", "detail": "4-16 jugs: no discount, one free push-in filler hose per jug. 20-56 jugs: up to 5% off plus free hose. 60+ (pallet, multiples of 60): up to 10% off plus free hose. Multiples of 4 same color. Upgraded hoses available at $3.25 screw cap or $4.25 reinforced. No expiration — updated August 2026.", "brands": ["Fire Power"], "ends": "", "min": "4 jugs, multiples of 4", "img": "fire-power-jug-and-hose.jpg"}
 ];
 let state={dealers:[],programs:[],removed:[]};
 let images={},pImage='';
@@ -552,6 +552,7 @@ function buildBrandTags(){
   const box=$('pBrands');
   box.innerHTML=allBrands().map(b=>'<button class="tag" data-b="'+esc(b)+'" aria-pressed="'+(pBrands.includes(b))+'">'+esc(b)+'</button>').join('');
 }
+let imgSeeded=false;
 function seedPrograms(){
   const today=todayISO();
   const have=new Set(state.programs.map(p=>String(p.name||'').toLowerCase()));
@@ -561,9 +562,10 @@ function seedPrograms(){
     const k=String(p.name||'').toLowerCase();
     if(!k||have.has(k)||gone.has(k))return;
     if(p.ends&&p.ends<today)return;
-    state.programs.push({id:'b'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-      name:p.name,detail:p.detail||'',brands:(p.brands||[]).map(canon),
+    const nid='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    state.programs.push({id:nid,name:p.name,detail:p.detail||'',brands:(p.brands||[]).map(canon),
       ends:p.ends||'',min:p.min||'',builtin:true});
+    if(p.img&&!images[nid]){images[nid]=p.img;imgSeeded=true;}
     have.add(k);added++;
   });
   return added;
@@ -705,12 +707,10 @@ function renderGaps(){
     let pHtml='';
     if(r.yoy<0){
       pHtml=progs.length
-        ? progs.map(p=>'<div class="prog"><details><summary><span class="pname">'+esc(p.name)+'</span></summary>'+
-            '<div class="pbody">'+
+        ? progs.map(p=>'<div class="prog"><p class="pname">'+esc(p.name)+'</p>'+
             (p.detail?'<p>'+esc(p.detail)+'</p>':'')+
-            (images[p.id]?'<button class="btn btn-ghost flyer-btn" data-flyer="'+p.id+'">View flyer</button><div class="flyer hidden" data-fl="'+p.id+'"></div>':'')+
-            '</div></details>'+
-            '<p class="pmeta" style="margin-top:5px">'+(p.ends?'Ends '+prettyDate(p.ends):'No end date')+(p.min?' · min '+esc(p.min):'')+'</p>'+
+            '<p class="pmeta">'+(p.ends?'Ends '+prettyDate(p.ends):'No end date')+(p.min?' · min '+esc(p.min):'')+'</p>'+
+            (images[p.id]?'<button class="btn btn-ghost flyer-btn" data-flyer="'+p.id+'">Show the flyer</button><div class="flyer hidden" data-fl="'+p.id+'"></div>':'')+
             '</div>').join('')
         : '<p class="noprog">No live program covers this one</p>';
     }
@@ -920,6 +920,7 @@ document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()
 (async function init(){renderAll();await loadState();await loadImages();
   state.removed=state.removed||[];
   if(seedPrograms())await saveState();
+  if(imgSeeded)await saveImages();
   renderAll();
   if(!storageOK)toast('Saved data unavailable — entries may not persist');})();
 </script>

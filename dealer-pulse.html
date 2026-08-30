@@ -24,6 +24,8 @@ body{background:var(--ink);color:var(--cream);font-family:var(--body);font-size:
 
 header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101B29,#0E1723);padding:18px 0 14px;margin-bottom:20px}
 .brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.build{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--brass);text-transform:uppercase;margin-top:5px;opacity:.75}
+.pmeta{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.05em}
 h1{font-family:var(--disp);font-weight:700;font-size:30px;letter-spacing:.06em;text-transform:uppercase;margin:0;line-height:1}
 h1 .dot{color:var(--brass)}
 .tally{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-align:right;white-space:nowrap;line-height:1.5}
@@ -150,7 +152,10 @@ window.addEventListener('unhandledrejection',function(e){
 
 <header>
   <div class="wrap brand">
-    <h1>Dealer Pulse<span class="dot">.</span></h1>
+    <div>
+      <h1>Dealer Pulse<span class="dot">.</span></h1>
+      <div class="build">Build 2 &middot; territory loaded</div>
+    </div>
     <div class="tally" id="tally">Loading</div>
   </div>
 </header>
@@ -335,6 +340,53 @@ const PULSE={up:'Growing',flat:'Steady',down:'Slipping'};
 const BRANDS=['Fly Racing','Fire Power','KFI','Open Trail','Michelin','Dunlop','Shinko','Cardo','EVS','Bel-Ray','Alpinestars','Other'];
 const ISSUES=['Foot traffic','Cash flow','Floorplan tight','Staffing','Online pricing','Inventory depth','Service backed up','Ownership change','Buying elsewhere','Weather / season'];
 
+const ROSTER=[
+  {"n": "BRENNY'S M/C CLINIC 930186", "c": "Riverdale, IA", "lo": "2026-08-28", "t": "ELI"},
+  {"n": "CAPITAL CITY MOTORSPORTS 2070062", "c": "Springfield, IL", "lo": "2026-08-20", "t": "VAL"},
+  {"n": "CB PERFORMANCE PARTS 2150319", "c": "Gurnee, IL", "lo": "2026-08-24", "t": "ELI"},
+  {"n": "CHECKMATEMX 2210236", "c": "Winnebago, IL", "lo": "2026-08-10", "t": "VAL"},
+  {"n": "CHICAGO HARLEY-DAVIDSON 2131878", "c": "Villa Park, IL", "lo": "2026-08-28", "t": "VAL"},
+  {"n": "CYCLE SPORT YAMAHA KTM 960380", "c": "Hobart, IN", "lo": "2026-08-23", "t": "ELI"},
+  {"n": "CYCLE TECH INC 2171096", "c": "Summit, IL", "lo": "2026-08-26", "t": "EXP"},
+  {"n": "CYCLES R US 2150789", "c": "Orland Park, IL", "lo": "2026-08-26", "t": "EXP"},
+  {"n": "D & W CYCLE SPECIALTIES 2171119", "c": "Geneseo, IL", "lo": "2026-08-27", "t": "EXP"},
+  {"n": "DES PLAINES HONDA 960130", "c": "Barrington, IL", "lo": "2026-08-27", "t": "EXP"},
+  {"n": "EMILS TIRES 2260312", "c": "Grant Park, IL", "lo": "", "t": "VAL"},
+  {"n": "EXPRESS POWERSPORTS 2110659", "c": "Bourbonnais, IL", "lo": "2026-08-28", "t": "PRO"},
+  {"n": "GENERATION MX 2200489", "c": "Plainfield, IL", "lo": "2026-08-20", "t": "EXP"},
+  {"n": "GLENN STICKELS 2150954", "c": "Rockford, IL", "lo": "2026-08-27", "t": "VAL"},
+  {"n": "GP CYCLESPORTS 2110033", "c": "Yorkville, IL", "lo": "2026-08-28", "t": "PRO"},
+  {"n": "HALLS CYCLES 2091392", "c": "Springfield, IL", "lo": "2026-08-26", "t": "VAL"},
+  {"n": "HAMMERTIME SPORTS 950142", "c": "Belvidere, IL", "lo": "2026-08-27", "t": "PRO"},
+  {"n": "HNH CYCLES 2260026", "c": "Romeoville, IL", "lo": "2026-08-20", "t": "VAL"},
+  {"n": "I MOTORSPORTS INC 2150754", "c": "Elmhurst, IL", "lo": "2026-08-27", "t": "ELI"},
+  {"n": "ILLINOIS HARLEY-DAVIDSON 2131788", "c": "Countryside, IL", "lo": "2026-08-25", "t": "PRO"},
+  {"n": "ILLINOIS POWERSPORTS 2100264", "c": "Maple Park, IL", "lo": "2026-08-27", "t": "EXP"},
+  {"n": "JOE'S POWERSPORTS, INC 2240525", "c": "Morris, IL", "lo": "2026-08-27", "t": "PRO"},
+  {"n": "LACON MARINE & POWERSPORTS LLC 2260235", "c": "Lacon, IL", "lo": "2026-06-24", "t": "VAL"},
+  {"n": "LOVES PARK MOTORSPORTS 2140115", "c": "Roscoe, IL", "lo": "2026-08-27", "t": "EXP"},
+  {"n": "MCC MOTORCYCLE CENTER 940506", "c": "Villa Park, IL", "lo": "2026-08-04", "t": "VAL"},
+  {"n": "MCNABB MOTORSPORTS 2140518", "c": "Mcnabb, IL", "lo": "2026-08-28", "t": "EXP"},
+  {"n": "NIELSEN'S ENTERPRISES 83100", "c": "Lake Villa, IL", "lo": "2026-08-28", "t": "ELI"},
+  {"n": "ONE POWERSPORTS 2080722", "c": "Delavan, WI", "lo": "2026-08-14", "t": "EXP"},
+  {"n": "PERFECTION WORX, INC 2250603", "c": "Addison, IL", "lo": "2026-07-20", "t": "VAL"},
+  {"n": "PRORIDE GROUP 2210362", "c": "Northbrook, IL", "lo": "2026-08-24", "t": "VAL"},
+  {"n": "REPAIR CLUB, LLC 2250275", "c": "Evanston, IL", "lo": "2026-08-28", "t": "VAL"},
+  {"n": "RICH'S YAMAHA 2080260", "c": "Lockport, IL", "lo": "2026-08-28", "t": "ELI"},
+  {"n": "RIDE RITE MOTO SERVICE 2260400", "c": "Roselle, IL", "lo": "2026-08-24", "t": "VAL"},
+  {"n": "RIDE SUSPENSION TECHNOLOGY 2210036", "c": "Metamora, IL", "lo": "2026-08-26", "t": "VAL"},
+  {"n": "ROUTE 12 RENTAL 86467", "c": "Arlington Heights, IL", "lo": "2026-07-29", "t": "VAL"},
+  {"n": "SUZUKI OF CAROL STREAM INC 2120236", "c": "Carol Stream, IL", "lo": "2026-08-24", "t": "PRO"},
+  {"n": "TODAY WE WRENCH 2240479", "c": "Frankfort, IL", "lo": "2026-08-25", "t": "VAL"},
+  {"n": "TOM ZONT RACING INC 2140150", "c": "Woodstock, IL", "lo": "2026-08-25", "t": "VAL"},
+  {"n": "TOOL STORE GO-KART SHOP 2101110", "c": "Forest View, IL", "lo": "2026-08-26", "t": "PRO"},
+  {"n": "WOODSTOCK HARLEY-DAVIDSON 2190198", "c": "Woodstock, IL", "lo": "2026-08-07", "t": "VAL"},
+  {"n": "WOODSTOCK KTM & TRIUMPH 2170500", "c": "Woodstock, IL", "lo": "2026-07-17", "t": "VAL"},
+  {"n": "WORLD OF P/S'S SPRINGFIELD 2152169", "c": "Springfield, IL", "lo": "2026-07-29", "t": "TRP"},
+  {"n": "WORLD OF POWER SPORTS 960387", "c": "Decatur, IL", "lo": "2026-08-28", "t": "TRP"},
+  {"n": "WORLD OF POWERSPORTS 2130091", "c": "Peoria, IL", "lo": "2026-08-28", "t": "TRP"},
+  {"n": "WORLD OF POWERSPORTS-CHAMPAIGN 89114", "c": "Urbana, IL", "lo": "2026-08-27", "t": "TRP"}
+];
 let state={visits:[],next:1};
 let pulse='flat', brands=[], issues=[], editingId=null, openDealer=null;
 
@@ -371,11 +423,13 @@ function setPulse(v){pulse=v;document.querySelectorAll('.pl').forEach(b=>b.setAt
 /* ---------- dealers ---------- */
 function dealerNames(){
   const m={};
+  ROSTER.forEach(r=>{m[r.n.toLowerCase()]=r.n;});
   state.visits.forEach(v=>{if(v.dealer){const k=v.dealer.trim().toLowerCase();if(!m[k])m[k]=v.dealer.trim();}});
   return Object.values(m).sort();
 }
 function byDealer(){
   const m={};
+  ROSTER.forEach(r=>{m[r.n.toLowerCase()]={name:r.n,city:r.c,lastOrder:r.lo,tier:r.t,visits:[]};});
   state.visits.forEach(v=>{
     const k=(v.dealer||'Unnamed').trim().toLowerCase();
     if(!m[k])m[k]={name:(v.dealer||'Unnamed').trim(),visits:[]};
@@ -383,9 +437,14 @@ function byDealer(){
   });
   Object.values(m).forEach(d=>{
     d.visits.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    d.last=d.visits[0].date; d.age=daysSince(d.last); d.pulse=d.visits[0].pulse;
+    if(d.visits.length){
+      d.seen=true; d.last=d.visits[0].date; d.age=daysSince(d.last); d.pulse=d.visits[0].pulse;
+    }else{
+      d.seen=false; d.last=''; d.age=9999; d.pulse=null;
+    }
+    d.orderAge=d.lastOrder?daysSince(d.lastOrder):9999;
   });
-  return Object.values(m).sort((a,b)=>b.age-a.age);
+  return Object.values(m).sort((a,b)=>b.age-a.age||a.name.localeCompare(b.name));
 }
 function ageClass(d){return d<30?'fresh':d<60?'due':'cold';}
 
@@ -445,7 +504,7 @@ function renderDealers(){
   }
   const list=byDealer().filter(d=>!q||(d.name+' '+d.visits.map(v=>Object.values(v).join(' ')).join(' ')).toLowerCase().includes(q));
   if(!list.length){box.innerHTML='<div class="empty"><strong>No matches</strong>Try a different word.</div>';return;}
-  const maxAge=Math.max(30,...list.map(d=>d.age));
+  const maxAge=Math.max(30,...list.filter(d=>d.seen).map(d=>d.age),30);
 
   box.innerHTML=list.map(d=>{
     const open=openDealer===d.name;
@@ -461,11 +520,16 @@ function renderDealers(){
           rows+'<button class="btn btn-ghost" data-edit="'+v.id+'">Edit this visit</button></div>';
       }).join('');
     }
-    return '<article class="dealer'+(open?' open':'')+'" data-age="'+ageClass(d.age)+'" data-name="'+esc(d.name)+'">'+
+    const days=d.seen?(d.age===0?'today':d.age+'d ago'):'no visit logged';
+    const meta=d.seen
+      ? d.visits.length+' visit'+(d.visits.length>1?'s':'')+' · now '+PULSE[d.pulse||'flat'].toLowerCase()
+      : (d.city?esc(d.city):'')+(d.lastOrder?' · last order '+prettyDate(d.lastOrder):' · never ordered')+(d.tier?' · '+esc(d.tier):'');
+    const railW=d.seen?Math.round(d.age/maxAge*100):100;
+    return '<article class="dealer'+(open?' open':'')+'" data-age="'+(d.seen?ageClass(d.age):'cold')+'" data-name="'+esc(d.name)+'">'+
       '<div class="d-top"><span class="d-name">'+esc(d.name)+'</span>'+
-      '<span class="d-days'+(d.age>=60?' cold':'')+'">'+(d.age===0?'today':d.age+'d ago')+'</span></div>'+
-      '<div class="rail"><span class="'+(d.pulse||'flat')+'" style="width:'+Math.round(d.age/maxAge*100)+'%"></span></div>'+
-      '<div class="trend">'+trend+'<em>'+d.visits.length+' visit'+(d.visits.length>1?'s':'')+' · now '+PULSE[d.pulse||'flat'].toLowerCase()+'</em></div>'+
+      '<span class="d-days'+((!d.seen||d.age>=60)?' cold':'')+'">'+days+'</span></div>'+
+      '<div class="rail"><span class="'+(d.pulse||'flat')+'" style="width:'+railW+'%'+(d.seen?'':';opacity:.28')+'"></span></div>'+
+      '<div class="trend">'+trend+'<em>'+meta+'</em></div>'+
       hist+'</article>';
   }).join('');
 }
@@ -486,18 +550,29 @@ function renderTerritory(){
   }
   const dealers=byDealer();
   const seen30=new Set(recentVisits(30).map(v=>(v.dealer||'').toLowerCase())).size;
-  const cold=dealers.filter(d=>d.age>=60);
+  const cold=dealers.filter(d=>d.seen&&d.age>=60);
+  const never=dealers.filter(d=>!d.seen);
   const down=dealers.filter(d=>d.pulse==='down');
   const up=dealers.filter(d=>d.pulse==='up');
+  const quiet=dealers.filter(d=>d.lastOrder!==undefined&&d.orderAge>=30)
+                     .sort((a,b)=>b.orderAge-a.orderAge);
 
   let html='<div class="stat-row">'+
     '<div class="stat"><b>'+seen30+'</b><span>Seen in 30d</span></div>'+
     '<div class="stat go"><b>'+up.length+'</b><span>Growing</span></div>'+
     '<div class="stat no"><b>'+down.length+'</b><span>Slipping</span></div>'+
-    '<div class="stat no"><b>'+cold.length+'</b><span>60d+ cold</span></div></div>';
+    '<div class="stat no"><b>'+(cold.length+never.length)+'</b><span>Need a visit</span></div></div>'+
+    '<p class="sub" style="font-family:var(--mono);font-size:11px">'+dealers.length+' accounts on the board · '+
+    never.length+' with no visit logged yet</p>';
 
+  if(quiet.length){
+    html+='<div class="card"><p class="eyebrow">Quiet on the order side</p>'+
+      quiet.map(d=>'<div class="bar"><span class="bar-fill issue" style="width:'+Math.min(90,d.orderAge===9999?90:d.orderAge)+'px"></span>'+
+        esc(d.name)+'<span class="bar-n">'+(d.orderAge===9999?'never':d.orderAge+'d')+'</span></div>').join('')+
+      '<p class="pmeta" style="margin:8px 0 0">Days since their last WPS order, as of Aug 30</p></div>';
+  }
   if(cold.length){
-    html+='<div class="card"><p class="eyebrow">Haven\'t been in these doors</p>'+
+    html+='<div class="card"><p class="eyebrow">Logged, but a while ago</p>'+
       cold.map(d=>'<div class="bar"><span class="bar-fill issue" style="width:'+Math.min(90,d.age)+'px"></span>'+
         esc(d.name)+'<span class="bar-n">'+d.age+'d</span></div>').join('')+'</div>';
   }
@@ -539,7 +614,7 @@ function bossUpdate(){
   const seen30=recentVisits(30);
   const names30=[...new Set(seen30.map(v=>v.dealer))];
   const up=dealers.filter(d=>d.pulse==='up'), flat=dealers.filter(d=>d.pulse==='flat'), down=dealers.filter(d=>d.pulse==='down');
-  const cold=dealers.filter(d=>d.age>=60);
+  const cold=dealers.filter(d=>d.seen&&d.age>=60);
   const bt=tally('brands'), it=tally('issues');
 
   let o='TERRITORY UPDATE — '+prettyDate(todayISO())+'\n\n';
@@ -556,7 +631,10 @@ function bossUpdate(){
   o+='\n';
   if(bt.length){o+='WHAT\'S SELLING\n'+bt.slice(0,8).map(t=>'  '+t.label+' — '+t.n+' account'+(t.n>1?'s':'')).join('\n')+'\n\n';}
   if(it.length){o+='WHAT THEY\'RE STRUGGLING WITH\n'+it.slice(0,8).map(t=>'  '+t.label+' — '+t.n+' account'+(t.n>1?'s':'')).join('\n')+'\n\n';}
-  if(cold.length){o+='NEEDS A VISIT (60+ days)\n'+cold.map(d=>'  '+d.name+' — '+d.age+' days').join('\n')+'\n\n';}
+  if(cold.length){o+='NEEDS A VISIT (60+ days since I was in)\n'+cold.map(d=>'  '+d.name+' — '+d.age+' days').join('\n')+'\n\n';}
+  const quiet=dealers.filter(d=>d.lastOrder!==undefined&&d.orderAge>=30).sort((a,b)=>b.orderAge-a.orderAge);
+  if(quiet.length){o+='QUIET ON ORDERS (30+ days)\n'+
+    quiet.map(d=>'  '+d.name+' — '+(d.orderAge===9999?'never ordered':d.orderAge+' days')).join('\n')+'\n\n';}
   const opps=state.visits.filter(v=>v.opp&&daysSince(v.date)<=45);
   if(opps.length){o+='OPENINGS I\'M WORKING\n'+opps.map(v=>'  '+v.dealer+' — '+v.opp).join('\n')+'\n\n';}
   const owed=state.visits.filter(v=>v.owe&&daysSince(v.date)<=45);
@@ -617,7 +695,7 @@ function showView(v){
 }
 function renderAll(){
   const dealers=byDealer();
-  const cold=dealers.filter(d=>d.age>=60).length;
+  const cold=dealers.filter(d=>!d.seen||d.age>=60).length;
   $('tally').innerHTML='<b>'+dealers.length+'</b> accounts<br>'+cold+' need a visit';
   $('dealerList').innerHTML=dealerNames().map(n=>'<option value="'+esc(n)+'">').join('');
   const recent=[...new Set(state.visits.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(v=>v.dealer))].slice(0,6);

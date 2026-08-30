@@ -140,7 +140,7 @@ window.addEventListener('unhandledrejection',function(e){
   <div class="wrap brand">
     <div>
       <h1>Program Match<span class="dot">.</span></h1>
-      <div class="build">Build 5 · programs built in</div>
+      <div class="build">Build 6 · smarter import</div>
     </div>
     <div class="tally" id="tally">Loading</div>
   </div>
@@ -206,6 +206,7 @@ window.addEventListener('unhandledrejection',function(e){
           <div class="field"><label for="m-mcur">This month <span style="text-transform:none">(optional)</span></label><select id="m-mcur"></select></div>
           <div class="field"><label for="m-mprior">Prior month <span style="text-transform:none">(optional)</span></label><select id="m-mprior"></select></div>
         </div>
+        <div id="mapPreview" style="margin:2px 0 14px"></div>
         <button class="btn btn-primary" id="saveImport">Save this dealer</button>
       </div>
     </div>
@@ -433,13 +434,21 @@ function allBrands(){
 }
 
 /* ---------- import ---------- */
-function guessCol(headers,words){
-  for(let i=0;i<headers.length;i++){
-    const h=headers[i].toLowerCase();
-    if(words.some(w=>h.indexOf(w)>-1))return i;
+function normHead(h){return String(h).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+function guessCol(headers,pats,skip){
+  for(let p=0;p<pats.length;p++){
+    for(let i=0;i<headers.length;i++){
+      if(skip!=null&&i===skip)continue;
+      if(normHead(headers[i]).indexOf(pats[p])>-1)return i;
+    }
   }
   return -1;
 }
+const P_BRAND=['brand','vendor','supplier','product line','line','description'];
+const P_CUR  =['sales this year','this year','this yr','current year','sales 2026','sales 26','ytd 26','cy sales','2026','ytd','cy',' 26','26'];
+const P_PRIOR=['sales last year','last year','last yr','prior year','previous year','sales 2025','sales 25','ly ytd','py sales','2025','ly','py',' 25','25'];
+const P_MCUR =['this month','current month','mtd','this mo'];
+const P_MPRIOR=['last month','prior month','previous month','last mo'];
 function showMapper(rows){
   parsed=rows;
   const headers=rows[0].map((h,i)=>String(h).trim()||('Column '+(i+1)));
@@ -451,18 +460,45 @@ function showMapper(rows){
   ['m-brand','m-cur','m-prior'].forEach(id=>opts($(id),false));
   ['m-mcur','m-mprior'].forEach(id=>opts($(id),true));
 
-  const gb=guessCol(headers,['brand','vendor','line','supplier','description']);
-  const gc=guessCol(headers,['ytd','this year','current','2026','cy']);
-  const gp=guessCol(headers,['ly','last year','prior year','py','2025']);
-  const gmc=guessCol(headers,['this month','mtd','current month']);
-  const gmp=guessCol(headers,['last month','prior month','previous month']);
-  $('m-brand').value=gb>-1?gb:0;
-  $('m-cur').value=gc>-1?gc:1;
-  $('m-prior').value=gp>-1?gp:(headers.length>2?2:1);
-  $('m-mcur').value=gmc>-1?gmc:-1;
-  $('m-mprior').value=gmp>-1?gmp:-1;
+  const gb=guessCol(headers,P_BRAND);
+  const gc=guessCol(headers,P_CUR,gb>-1?gb:null);
+  const gp=guessCol(headers,P_PRIOR,gc>-1?gc:null);
+  const gmc=guessCol(headers,P_MCUR);
+  const gmp=guessCol(headers,P_MPRIOR);
+  const bi=gb>-1?gb:0;
+  let ci=(gc>-1&&gc!==bi)?gc:(bi===0?1:0);
+  let pi=(gp>-1&&gp!==bi&&gp!==ci)?gp:-1;
+  if(pi<0){for(let i=0;i<headers.length;i++){if(i!==bi&&i!==ci){pi=i;break;}}}
+  if(pi<0)pi=ci;
+  $('m-brand').value=bi;
+  $('m-cur').value=ci;
+  $('m-prior').value=pi;
+  $('m-mcur').value=(gmc>-1&&gmc!==ci)?gmc:-1;
+  $('m-mprior').value=(gmp>-1&&gmp!==pi)?gmp:-1;
+  mapPreview();
   $('mapBox').classList.remove('hidden');
   $('mapBox').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function mapPreview(){
+  const box=$('mapPreview');
+  if(!parsed){box.innerHTML='';return;}
+  const iB=+$('m-brand').value,iC=+$('m-cur').value,iP=+$('m-prior').value;
+  let up=0,down=0,same=0,n=0;const ex=[];
+  parsed.slice(1).forEach(r=>{
+    const b=canon(r[iB]);
+    if(!b||/^totals?\b/i.test(b))return;
+    const c=num(r[iC]),p=num(r[iP]);
+    if(c===0&&p===0)return;
+    n++;
+    if(c<p)down++;else if(c>p)up++;else same++;
+    if(ex.length<3)ex.push(b+': '+money(c)+' vs '+money(p)+' = '+(c-p>=0?'+':'')+money(c-p));
+  });
+  const bad=(n>2&&down===0&&up===0);
+  box.innerHTML='<p class="eyebrow" style="margin:0 0 6px">What this will produce</p>'+
+    ex.map(e=>'<p class="pmeta" style="margin:0 0 3px">'+esc(e)+'</p>').join('')+
+    '<p class="pmeta" style="margin:8px 0 0'+(bad?';color:#B4614F':'')+'">'+
+    n+' brands · '+down+' down · '+up+' up'+(same?' · '+same+' unchanged':'')+
+    (bad?' — both columns are reading the same numbers, pick different ones':'')+'</p>';
 }
 async function saveImport(){
   const name=$('i-dealer').value.trim();
@@ -470,12 +506,15 @@ async function saveImport(){
   if(!parsed){toast('Read a paste or a file first');return;}
   const iB=+$('m-brand').value,iC=+$('m-cur').value,iP=+$('m-prior').value;
   const iMC=+$('m-mcur').value,iMP=+$('m-mprior').value;
-  const rows=[];
+  const rows=[];const seenRow={};
   parsed.slice(1).forEach(r=>{
     const b=canon(r[iB]);
-    if(!b)return;
+    if(!b||/^totals?\b/i.test(b))return;
     const cur=num(r[iC]),prior=num(r[iP]);
     if(cur===0&&prior===0)return;
+    const sig=b+'|'+cur+'|'+prior;
+    if(seenRow[sig])return;          // same brand repeated with identical figures
+    seenRow[sig]=1;
     const row={brand:b,cur:cur,prior:prior};
     if(iMC>-1)row.mcur=num(r[iMC]);
     if(iMP>-1)row.mprior=num(r[iMP]);
@@ -494,7 +533,10 @@ async function saveImport(){
   const rec={id:i>-1?state.dealers[i].id:'d'+Date.now(),name:name,rows:final,updated:todayISO()};
   if(i>-1)state.dealers[i]=rec;else state.dealers.push(rec);
   if(!await saveState())return;
-  toast(final.length+' brands saved for '+name);
+  const nd=final.filter(x=>x.cur<x.prior).length,nu=final.filter(x=>x.cur>x.prior).length;
+  if(final.length>2&&nd===0&&nu===0)
+    toast('Saved, but every brand is flat — the two columns are probably the same one');
+  else toast(final.length+' brands saved · '+nd+' down, '+nu+' up');
   parsed=null;$('mapBox').classList.add('hidden');$('i-paste').value='';$('i-dealer').value='';
   renderAll();
 }
@@ -777,6 +819,8 @@ $('csvFile').addEventListener('change',ev=>{
     showMapper(rows);};
   r.readAsText(f);ev.target.value='';
 });
+['m-brand','m-cur','m-prior','m-mcur','m-mprior'].forEach(id=>
+  $(id).addEventListener('change',mapPreview));
 $('saveImport').addEventListener('click',saveImport);
 $('saveProgram').addEventListener('click',saveProgram);
 $('pCancel').addEventListener('click',()=>{clearProgramForm();toast('Edit cancelled');});

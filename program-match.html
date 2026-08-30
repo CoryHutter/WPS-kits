@@ -73,6 +73,12 @@ details.more[open]>summary::after{content:"\2212"}
 .g-nums{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:.03em}
 .g-nums b{color:var(--cream);font-weight:400}
 .prog{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
+.prog details{margin:0}
+.prog summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;padding:1px 0}
+.prog summary::-webkit-details-marker{display:none}
+.prog summary::after{content:"+";font-family:var(--mono);font-size:14px;line-height:1;color:var(--brass);margin-left:auto;flex:none}
+.prog details[open] summary::after{content:"\2212"}
+.prog .pbody{padding-top:7px}
 .prog p{margin:0 0 3px;font-size:14px;line-height:1.4}
 .prog .pname{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--brass);text-transform:uppercase}
 .prog .pmeta{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.05em}
@@ -140,7 +146,7 @@ window.addEventListener('unhandledrejection',function(e){
   <div class="wrap brand">
     <div>
       <h1>Program Match<span class="dot">.</span></h1>
-      <div class="build">Build 6 · smarter import</div>
+      <div class="build">Build 7 · tap to open a program</div>
     </div>
     <div class="tally" id="tally">Loading</div>
   </div>
@@ -699,10 +705,12 @@ function renderGaps(){
     let pHtml='';
     if(r.yoy<0){
       pHtml=progs.length
-        ? progs.map(p=>'<div class="prog"><p class="pname">'+esc(p.name)+'</p>'+
+        ? progs.map(p=>'<div class="prog"><details><summary><span class="pname">'+esc(p.name)+'</span></summary>'+
+            '<div class="pbody">'+
             (p.detail?'<p>'+esc(p.detail)+'</p>':'')+
-            '<p class="pmeta">'+(p.ends?'Ends '+prettyDate(p.ends):'No end date')+(p.min?' · min '+esc(p.min):'')+'</p>'+
             (images[p.id]?'<button class="btn btn-ghost flyer-btn" data-flyer="'+p.id+'">View flyer</button><div class="flyer hidden" data-fl="'+p.id+'"></div>':'')+
+            '</div></details>'+
+            '<p class="pmeta" style="margin-top:5px">'+(p.ends?'Ends '+prettyDate(p.ends):'No end date')+(p.min?' · min '+esc(p.min):'')+'</p>'+
             '</div>').join('')
         : '<p class="noprog">No live program covers this one</p>';
     }

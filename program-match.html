@@ -146,7 +146,7 @@ window.addEventListener('unhandledrejection',function(e){
   <div class="wrap brand">
     <div>
       <h1>Program Match<span class="dot">.</span></h1>
-      <div class="build">Build 8 · flyers attached</div>
+      <div class="build">Build 9 · flyers attached</div>
     </div>
     <div class="tally" id="tally">Loading</div>
   </div>
@@ -553,6 +553,16 @@ function buildBrandTags(){
   box.innerHTML=allBrands().map(b=>'<button class="tag" data-b="'+esc(b)+'" aria-pressed="'+(pBrands.includes(b))+'">'+esc(b)+'</button>').join('');
 }
 let imgSeeded=false;
+function seedImages(){
+  const byName={};
+  BUILT_IN.forEach(p=>{if(p.img)byName[String(p.name||'').toLowerCase()]=p.img;});
+  let n=0;
+  state.programs.forEach(p=>{
+    const f=byName[String(p.name||'').toLowerCase()];
+    if(f&&!images[p.id]){images[p.id]=f;n++;}
+  });
+  return n;
+}
 function seedPrograms(){
   const today=todayISO();
   const have=new Set(state.programs.map(p=>String(p.name||'').toLowerCase()));
@@ -897,9 +907,18 @@ $('gapBody').addEventListener('click',ev=>{
   const box=b.parentNode.querySelector('[data-fl="'+id+'"]');
   if(!box)return;
   if(box.classList.contains('hidden')){
-    if(!box.innerHTML)box.innerHTML='<img alt="Program flyer" src="'+esc(images[id])+'">';
+    if(!box.innerHTML){
+      const im=document.createElement('img');
+      im.alt='Program flyer';
+      im.onerror=function(){
+        box.innerHTML='<p class="noprog">Flyer not found — check that '+esc(images[id])+
+          ' was uploaded to the same folder as this app</p>';
+      };
+      im.src=images[id];
+      box.appendChild(im);
+    }
     box.classList.remove('hidden');b.textContent='Hide flyer';
-  }else{box.classList.add('hidden');b.textContent='View flyer';}
+  }else{box.classList.add('hidden');b.textContent='Show the flyer';}
 });
 $('importPrograms').addEventListener('click',importPrograms);
 $('clearExpired').addEventListener('click',clearExpired);
@@ -920,7 +939,7 @@ document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()
 (async function init(){renderAll();await loadState();await loadImages();
   state.removed=state.removed||[];
   if(seedPrograms())await saveState();
-  if(imgSeeded)await saveImages();
+  if(seedImages()||imgSeeded)await saveImages();
   renderAll();
   if(!storageOK)toast('Saved data unavailable — entries may not persist');})();
 </script>

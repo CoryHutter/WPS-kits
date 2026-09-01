@@ -122,6 +122,45 @@ details.more[open]>summary::after{content:"\2212"}
 .mapgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .preview{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);
   border-radius:3px;padding:10px;overflow-x:auto;white-space:pre;margin-bottom:12px}
+
+/* ---------- printable sheets ---------- */
+#printView{position:fixed;inset:0;background:#fff;color:#1b1b1b;z-index:80;overflow:auto;display:none}
+#printView.show{display:block}
+.pbar{position:sticky;top:0;background:#0E1723;padding:10px 14px;display:flex;gap:8px;z-index:2}
+.pbar button{flex:1;border:0;border-radius:3px;padding:11px;cursor:pointer;font-family:var(--mono);
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.pbar .go{background:var(--brass);color:#12100A;font-weight:500}
+.pbar .gh{background:transparent;color:#8496AC;border:1px solid #27374B}
+.psheet{max-width:740px;margin:0 auto;padding:26px 22px 70px;font-family:var(--body);font-size:14px;line-height:1.5}
+.psheet h1{font-family:var(--disp);font-size:31px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin:0 0 3px;color:#111}
+.psheet .pmeta2{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:#6b7480;margin:0 0 18px}
+.psheet h2{font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  margin:26px 0 10px;padding-bottom:5px;border-bottom:2px solid #1b1b1b;color:#111}
+.ptot{background:#f2efe7;border:1px solid #ddd6c6;border-radius:3px;padding:13px 15px;margin-bottom:6px}
+.ptot b{font-family:var(--disp);font-size:26px;letter-spacing:.02em}
+.ptot .dn{color:#9E4A38}.ptot .up{color:#3f7a56}
+.prow{border-bottom:1px solid #e4e0d6;padding:11px 0}
+.prow:last-child{border-bottom:0}
+.ptop{display:flex;align-items:baseline;gap:12px}
+.pbrand{font-family:var(--disp);font-size:19px;font-weight:600;letter-spacing:.03em;flex:1}
+.pgap{font-family:var(--mono);font-size:15px;font-weight:500;white-space:nowrap}
+.pgap.dn{color:#9E4A38}.pgap.up{color:#3f7a56}
+.pnums{font-family:var(--mono);font-size:11px;color:#6b7480;margin-top:3px}
+.pprog{margin:9px 0 0 0;padding:10px 12px;background:#f7f5ef;border-left:3px solid #B0801F;border-radius:2px}
+.pprog .pn{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:#8a6413;margin:0 0 3px}
+.pprog p{margin:0;font-size:13.5px;line-height:1.45}
+.pprog .pd{font-family:var(--mono);font-size:10.5px;color:#6b7480;margin-top:5px}
+.pnone{font-family:var(--mono);font-size:10.5px;color:#98a0aa;margin-top:6px}
+.pfoot{margin-top:30px;padding-top:14px;border-top:1px solid #ddd6c6;font-size:13px;color:#4a5058}
+.pcols{font-family:var(--mono);font-size:12px;color:#4a5058;line-height:1.8}
+@media print{
+  body>*{display:none !important}
+  #printView{display:block !important;position:static;overflow:visible}
+  .pbar{display:none !important}
+  .psheet{max-width:none;padding:0}
+  .pprog{background:#f3f1eb !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ptot{background:#f3f1eb !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;
   background:var(--brass);color:#12100A;padding:10px 18px;border-radius:3px;font-family:var(--mono);font-size:12px;z-index:50;
   opacity:0;pointer-events:none;transition:opacity .18s;max-width:88%;text-align:center}
@@ -154,7 +193,7 @@ window.addEventListener('unhandledrejection',function(e){
   <div class="wrap brand">
     <div>
       <h1>Program Match<span class="dot">.</span></h1>
-      <div class="build">Build 14 · three tabs</div>
+      <div class="build">Build 15 · printable sheets</div>
     </div>
     <div class="tally" id="tally">Loading</div>
   </div>
@@ -179,9 +218,10 @@ window.addEventListener('unhandledrejection',function(e){
     </div>
     <div id="gapBody"></div>
     <div id="gapActions" class="hidden">
-      <button class="btn btn-primary" id="callSheetBtn">Build the call sheet</button>
+      <button class="btn btn-primary" id="callSheetBtn">My call sheet</button>
       <div class="btn-row">
-        <button class="btn btn-ghost" id="claudeBtn">Send to Claude for the pitch</button>
+        <button class="btn btn-ghost" id="dealerSheetBtn">Dealer sheet</button>
+        <button class="btn btn-ghost" id="claudeBtn">Send to Claude</button>
       </div>
     </div>
   </section>
@@ -311,6 +351,15 @@ window.addEventListener('unhandledrejection',function(e){
 
 
 <div id="toast"></div>
+<div id="printView">
+  <div class="pbar">
+    <button class="go" id="doPrint">Print / Save PDF</button>
+    <button class="gh" id="copySheet">Copy as text</button>
+    <button class="gh" id="closePrint">Close</button>
+  </div>
+  <div class="psheet" id="printBody"></div>
+</div>
+
 <div id="modal">
   <div class="modal-inner">
     <p class="eyebrow" id="modalEyebrow">Copy this</p>
@@ -837,6 +886,65 @@ function renderGaps(){
   box.innerHTML=html;
   $('gapActions').classList.remove('hidden');
 }
+function curDealer(){return state.dealers.find(x=>x.id===$('pickDealer').value)||state.dealers[0];}
+function progBlock(p,forDealer){
+  return '<div class="pprog"><p class="pn">'+esc(p.name)+'</p>'+
+    (p.detail?'<p>'+esc(p.detail)+'</p>':'')+
+    '<p class="pd">'+(p.ends?'Ends '+prettyDate(p.ends):'No end date')+
+    (p.min?' · minimum '+esc(p.min):'')+
+    (forDealer?' · must be requested, does not apply automatically':'')+'</p></div>';
+}
+function internalSheet(){
+  const d=curDealer(); if(!d)return '';
+  const rows=analyze(d), down=rows.filter(r=>r.yoy<0), up=rows.filter(r=>r.yoy>0);
+  const tc=rows.reduce((s,r)=>s+r.cur,0), tp=rows.reduce((s,r)=>s+r.prior,0);
+  const pct=tp?Math.round((tc-tp)/tp*100):0;
+  const covered=down.filter(r=>programsFor(r.brand).length).length;
+  let h='<h1>'+esc(d.name)+'</h1>'+
+    '<p class="pmeta2">Call sheet · '+prettyDate(todayISO())+' · figures updated '+prettyDate(d.updated)+'</p>'+
+    '<div class="ptot"><b class="'+(tc>=tp?'up':'dn')+'">'+(pct>=0?'+':'')+pct+'%</b> &nbsp; '+
+    money(tc)+' this year against '+money(tp)+' last year<br>'+
+    '<span class="pcols">'+down.length+' brands down · '+covered+' with a live program · '+up.length+' growing</span></div>';
+  h+='<h2>Down — biggest dollars first</h2>';
+  h+=down.map(r=>{
+    const ps=programsFor(r.brand);
+    return '<div class="prow"><div class="ptop"><span class="pbrand">'+esc(r.brand)+'</span>'+
+      '<span class="pgap dn">'+money(r.yoy)+'</span></div>'+
+      '<div class="pnums">'+money(r.cur)+' vs '+money(r.prior)+' last year ('+Math.round(r.yoyPct)+'%)'+
+      (r.mom!=null?' · month '+(r.mom>=0?'+':'')+money(r.mom):'')+'</div>'+
+      (ps.length?ps.map(p=>progBlock(p,false)).join(''):'<p class="pnone">No live program covers this one</p>')+
+      '</div>';
+  }).join('');
+  if(up.length){
+    h+='<h2>Holding up</h2><div class="pcols">'+
+      up.map(r=>esc(r.brand)+' +'+money(r.yoy)+' ('+Math.round(r.yoyPct)+'%)').join('<br>')+'</div>';
+  }
+  h+='<div class="pfoot">Sorted by dollars lost, not percentage — the top of this list is where the conversation starts.</div>';
+  return h;
+}
+function dealerSheet(){
+  const d=curDealer(); if(!d)return '';
+  const rows=analyze(d).filter(r=>r.yoy<0&&programsFor(r.brand).length);
+  let h='<h1>What we have for you</h1>'+
+    '<p class="pmeta2">'+esc(d.name)+' · '+prettyDate(todayISO())+' · prepared by Cory Hutter, WPS</p>';
+  if(!rows.length){
+    h+='<p>Nothing on this month\'s sheet lines up with where you are off right now. I will bring the new programs as soon as they land.</p>';
+  }else{
+    h+='<p style="margin:0 0 6px">These are the lines you have bought less of this year, and the WPS programs running right now that cover them.</p>';
+    h+=rows.map(r=>'<div class="prow"><div class="ptop"><span class="pbrand">'+esc(r.brand)+'</span></div>'+
+      '<div class="pnums">'+money(r.cur)+' so far this year, against '+money(r.prior)+' last year</div>'+
+      programsFor(r.brand).map(p=>progBlock(p,true)).join('')+'</div>').join('');
+  }
+  h+='<div class="pfoot">Tell me which of these you want and I will get them on your next order.<br>'+
+     'Cory Hutter · Western Power Sports</div>';
+  return h;
+}
+function openPrint(html,textVersion){
+  $('printBody').innerHTML=html;
+  $('printView').classList.add('show');
+  printText=textVersion;
+}
+let printText='';
 function callSheet(){
   const d=state.dealers.find(x=>x.id===$('pickDealer').value)||state.dealers[0];
   if(!d)return'';
@@ -1040,7 +1148,14 @@ $('restoreBuiltins').addEventListener('click',async()=>{
   const n=seedPrograms();
   if(await saveState()){toast(n?n+' programs brought back':'Nothing was removed');renderAll();}
 });
-$('callSheetBtn').addEventListener('click',()=>openModal('Call sheet',callSheet()));
+$('callSheetBtn').addEventListener('click',()=>openPrint(internalSheet(),callSheet()));
+$('dealerSheetBtn').addEventListener('click',()=>openPrint(dealerSheet(),callSheet()));
+$('doPrint').addEventListener('click',()=>window.print());
+$('closePrint').addEventListener('click',()=>$('printView').classList.remove('show'));
+$('copySheet').addEventListener('click',async()=>{
+  try{await navigator.clipboard.writeText(printText);toast('Copied as text');}
+  catch(e){$('printView').classList.remove('show');openModal('Call sheet',printText);}
+});
 $('claudeBtn').addEventListener('click',()=>openModal('For Claude',claudePrompt()));
 let lastMailSubject='From Cory Hutter, WPS';
 $('mailBtn').addEventListener('click',()=>mailto(lastMailSubject,$('outText').value));

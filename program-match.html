@@ -154,7 +154,7 @@ window.addEventListener('unhandledrejection',function(e){
   <div class="wrap brand">
     <div>
       <h1>Program Match<span class="dot">.</span></h1>
-      <div class="build">Build 13 · expiry warnings</div>
+      <div class="build">Build 14 · three tabs</div>
     </div>
     <div class="tally" id="tally">Loading</div>
   </div>
@@ -164,7 +164,6 @@ window.addEventListener('unhandledrejection',function(e){
   <button data-view="gaps" aria-current="true">Gaps</button>
   <button data-view="import" aria-current="false">Import</button>
   <button data-view="specials" aria-current="false">Specials</button>
-  <button data-view="programs" aria-current="false">Programs</button>
 </nav>
 
 <main class="wrap">
@@ -241,13 +240,9 @@ window.addEventListener('unhandledrejection',function(e){
       <input type="text" id="specialSearch" placeholder="Search a brand or program" autocomplete="off">
     </div>
     <div id="specialsBody"></div>
-  </section>
-
-  <!-- ============ PROGRAMS ============ -->
-  <section class="view" id="view-programs">
-    <p class="eyebrow">What's running</p>
-    <h2>Programs</h2>
-    <p class="sub">Add them by hand, or paste the block Claude builds from your monthly bulletin.</p>
+    <details class="more" style="margin-top:22px">
+      <summary>Add, edit, or back up</summary>
+      <div class="more-body">
 
     <div class="field">
       <label for="p-name">Program name</label>
@@ -307,7 +302,10 @@ window.addEventListener('unhandledrejection',function(e){
       <button class="btn btn-ghost" id="restoreBtn">Restore backup</button>
     </div>
     <input type="file" id="restoreFile" accept="application/json,.json" class="hidden">
+      </div>
+    </details>
   </section>
+
 
 </main>
 
@@ -743,7 +741,7 @@ function renderSpecials(){
   let list=activePrograms();
   if(q)list=list.filter(p=>((p.name||'')+' '+(p.detail||'')+' '+(p.brands||[]).join(' ')).toLowerCase().indexOf(q)>-1);
   if(!activePrograms().length){
-    box.innerHTML='<div class="empty"><strong>No live programs</strong>Last month\'s have expired. Load the new sheet on the Programs tab.</div>';
+    box.innerHTML='<div class="empty"><strong>No live programs</strong>Last month\'s have expired. Load the new sheet below.</div>';
     return;
   }
   if(!list.length){box.innerHTML='<div class="empty"><strong>No matches</strong>Try a different word.</div>';return;}
@@ -769,7 +767,7 @@ function renderSpecials(){
         (p.ends?'Ends '+prettyDate(p.ends):'No end date')+(p.min?' · min '+esc(p.min):'')+'</p>'+
       (images[p.id]
         ? '<button class="btn btn-ghost flyer-btn" data-flyer="'+p.id+'">Show the flyer</button><div class="flyer hidden" data-fl="'+p.id+'"></div>'
-        : '<p class="noprog">No flyer attached — add one on the Programs tab</p>')+
+        : '<p class="noprog">No flyer attached — add one below</p>')+
       '<div class="btn-row"><button class="btn btn-ghost" data-share="'+p.id+'">Send this one to a dealer</button></div>'+
       '</div>').join('');
 }

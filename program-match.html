@@ -193,7 +193,7 @@ window.addEventListener('unhandledrejection',function(e){
   <div class="wrap brand">
     <div>
       <h1>Program Match<span class="dot">.</span></h1>
-      <div class="build">Build 16 · September specials</div>
+      <div class="build">Build 18 · load all dealers</div>
     </div>
     <div class="tally" id="tally">Loading</div>
   </div>
@@ -265,6 +265,22 @@ window.addEventListener('unhandledrejection',function(e){
       </div>
     </div>
 
+    <details class="more" style="margin-top:20px">
+      <summary>Load every dealer at once</summary>
+      <div class="more-body">
+        <p class="sub">A single file with all your dealers in it. Each one starts with a line reading
+          <span style="font-family:var(--mono);font-size:12px">### DEALER: NAME 123456</span>.
+          Re-loading replaces whatever is already there for those dealers.</p>
+        <div class="field"><textarea id="bulkPaste" placeholder="### DEALER: I MOTORSPORTS INC 2150754&#10;Brand&#9;Sales This Year&#9;Sales Last Year&#10;YUASA&#9;43970.56&#9;49345.98"></textarea></div>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn btn-ghost" id="bulkRead">Read the paste</button>
+          <button class="btn btn-ghost" id="bulkFile">Choose a file</button>
+        </div>
+        <input type="file" id="bulkFileInput" accept=".txt,.csv,.tsv,text/plain" class="hidden">
+        <div id="bulkResult"></div>
+      </div>
+    </details>
+
     <div style="margin-top:22px">
       <p class="eyebrow">Dealers on file</p>
       <div id="dealerCards"></div>
@@ -324,10 +340,6 @@ window.addEventListener('unhandledrejection',function(e){
         <div class="field"><textarea id="p-json" placeholder='[{"name":"...","detail":"...","brands":["Fly Racing"],"ends":"2026-09-30","min":"12 units"}]'></textarea></div>
         <div class="btn-row" style="margin-top:0">
           <button class="btn btn-ghost" id="importPrograms">Add them</button>
-          <button class="btn btn-ghost" id="clearExpired">Clear expired</button>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-ghost" id="restoreBuiltins">Bring back removed</button>
         </div>
       </div>
     </details>
@@ -338,6 +350,10 @@ window.addEventListener('unhandledrejection',function(e){
     </div>
 
     <div class="btn-row" style="margin-top:18px">
+      <button class="btn btn-ghost" id="clearExpired">Clear expired</button>
+      <button class="btn btn-ghost" id="restoreBuiltins">Bring back removed</button>
+    </div>
+    <div class="btn-row">
       <button class="btn btn-ghost" id="backupBtn">Save backup</button>
       <button class="btn btn-ghost" id="restoreBtn">Restore backup</button>
     </div>
@@ -612,6 +628,55 @@ async function saveImport(){
   renderAll();
 }
 
+async function bulkImport(text){
+  const blocks=String(text).replace(/\r\n/g,'\n').split(/^#+\s*DEALER:\s*/mi);
+  let added=0,updated=0,empty=[],total=0;
+  for(const blk of blocks){
+    if(!blk.trim())continue;
+    const lines=blk.split('\n');
+    const name=(lines.shift()||'').trim();
+    if(!name)continue;
+    const rows=[],seen={};
+    lines.forEach(l=>{
+      if(!l.trim())return;
+      const c=l.indexOf('\t')>-1?l.split('\t'):l.split(',');
+      if(c.length<3)return;
+      const raw=(c[0]||'').trim();
+      if(!raw||/^brand\b/i.test(raw)||/^totals?\b/i.test(raw))return;
+      const b=canon(raw), cur=num(c[1]), prior=num(c[2]);
+      if(!b||(cur===0&&prior===0))return;
+      const sig=b+'|'+cur+'|'+prior;
+      if(seen[sig])return;
+      seen[sig]=1;
+      rows.push({brand:b,cur:cur,prior:prior,mcur:0,mprior:0,hasM:false});
+    });
+    if(!rows.length){empty.push(name);continue;}
+    const merged={};
+    rows.forEach(r=>{
+      const k=r.brand.toLowerCase();
+      if(!merged[k])merged[k]={brand:r.brand,cur:0,prior:0,mcur:0,mprior:0,hasM:false};
+      merged[k].cur+=r.cur;merged[k].prior+=r.prior;
+    });
+    const final=Object.values(merged);
+    total+=final.length;
+    const i=state.dealers.findIndex(d=>d.name.toLowerCase()===name.toLowerCase());
+    const rec={id:i>-1?state.dealers[i].id:'d'+Date.now()+Math.random().toString(36).slice(2,6),
+      name:name,rows:final,updated:todayISO()};
+    if(i>-1){state.dealers[i]=rec;updated++;}else{state.dealers.push(rec);added++;}
+  }
+  if(!added&&!updated){
+    $('bulkResult').innerHTML='<p class="pmeta" style="color:#B4614F;margin-top:12px">'+
+      'Nothing read. Each dealer needs a line starting with ### DEALER: before its rows.</p>';
+    return;
+  }
+  if(!await saveState())return;
+  $('bulkResult').innerHTML='<p class="pmeta" style="margin-top:12px">'+
+    added+' dealers added · '+updated+' updated · '+total+' brand rows'+
+    (empty.length?'<br>No usable rows for: '+esc(empty.join(', ')):'')+'</p>';
+  toast(added+added+updated>0?(added+updated)+' dealers loaded':'Nothing loaded');
+  renderAll();
+}
+
 /* ---------- programs ---------- */
 function buildBrandTags(){
   const box=$('pBrands');
@@ -630,18 +695,21 @@ function seedImages(){
 }
 function seedPrograms(){
   const today=todayISO();
-  const have=new Set(state.programs.map(p=>String(p.name||'').toLowerCase()));
+  const live={};
+  state.programs.forEach(p=>{
+    if(!p.ends||p.ends>=today)live[String(p.name||'').toLowerCase()]=true;
+  });
   const gone=new Set((state.removed||[]).map(x=>String(x).toLowerCase()));
   let added=0;
   BUILT_IN.forEach(p=>{
     const k=String(p.name||'').toLowerCase();
-    if(!k||have.has(k)||gone.has(k))return;
+    if(!k||live[k]||gone.has(k))return;
     if(p.ends&&p.ends<today)return;
     const nid='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     state.programs.push({id:nid,name:p.name,detail:p.detail||'',brands:(p.brands||[]).map(canon),
       ends:p.ends||'',min:p.min||'',builtin:true});
     if(p.img&&!images[nid]){images[nid]=p.img;imgSeeded=true;}
-    have.add(k);added++;
+    live[k]=true;added++;
   });
   return added;
 }
@@ -1051,6 +1119,20 @@ $('csvFile').addEventListener('change',ev=>{
 ['m-brand','m-cur','m-prior','m-mcur','m-mprior'].forEach(id=>
   $(id).addEventListener('change',mapPreview));
 $('saveImport').addEventListener('click',saveImport);
+$('bulkRead').addEventListener('click',()=>{
+  const t=$('bulkPaste').value.trim();
+  if(!t){toast('Paste the file contents first');return;}
+  bulkImport(t);
+});
+$('bulkFile').addEventListener('click',()=>$('bulkFileInput').click());
+$('bulkFileInput').addEventListener('change',ev=>{
+  const f=ev.target.files[0];ev.target.value='';
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>bulkImport(r.result);
+  r.onerror=()=>toast("Couldn't read that file");
+  r.readAsText(f);
+});
 $('saveProgram').addEventListener('click',saveProgram);
 $('pCancel').addEventListener('click',()=>{clearProgramForm();toast('Edit cancelled');});
 $('pDelete').addEventListener('click',async()=>{

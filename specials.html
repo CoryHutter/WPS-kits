@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WPS Specials Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1723; --panel:#15202F; --panel2:#1B2838; --line:#27374B;
+  --cream:#E9E1D2; --muted:#8496AC; --brass:#C99A3C; --red:#B4614F; --green:#5E9B76;
+  --disp:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono","SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--ink);color:var(--cream);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-bottom:56px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:660px;margin:0 auto;padding:0 16px}
+a{color:var(--brass)}
+
+/* ---------- hero: the deadline ---------- */
+.hero{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101B29,#0E1723);
+  padding:26px 0 20px;margin-bottom:20px}
+.hero .count{font-family:var(--disp);font-weight:700;font-size:clamp(38px,13vw,62px);
+  line-height:.94;letter-spacing:.01em;margin:0}
+.hero .count em{font-style:normal;color:var(--brass)}
+.hero .through{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;color:var(--muted);
+  margin:10px 0 0}
+.track{height:3px;background:var(--line);border-radius:2px;margin-top:14px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--brass)}
+.orient{font-size:14px;color:var(--muted);margin:14px 0 0;max-width:52ch}
+
+/* ---------- tabs ---------- */
+nav.tabs{display:flex;border-bottom:1px solid var(--line);margin:0 0 22px;
+  max-width:660px;margin-left:auto;margin-right:auto;padding:0 16px}
+nav.tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;cursor:pointer;
+  padding:13px 4px;color:var(--muted);font-family:var(--mono);font-size:11.5px;letter-spacing:.11em}
+nav.tabs button[aria-current=true]{color:var(--brass);border-bottom-color:var(--brass)}
+nav.tabs button:focus-visible{outline:2px solid var(--brass);outline-offset:-2px}
+.view{display:none}.view.on{display:block}
+.repnote{border:1px solid rgba(180,97,79,.5);background:rgba(180,97,79,.12);border-left:3px solid var(--red);
+  border-radius:3px;padding:12px 13px;margin-bottom:20px;font-size:14px;line-height:1.45}
+.s{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--brass);
+  border-radius:3px;padding:15px;margin-bottom:12px}
+.s h3{font-family:var(--disp);font-weight:600;font-size:21px;letter-spacing:.03em;margin:0 0 4px}
+.s .prize{font-family:var(--disp);font-size:15px;color:var(--brass);letter-spacing:.03em;margin:0 0 8px}
+.s p{margin:0 0 8px;font-size:14.5px;line-height:1.5}
+.s .lift{background:var(--panel2);border-radius:3px;padding:10px 12px;margin-top:10px;
+  font-size:13.5px;line-height:1.5;color:var(--cream)}
+.s .lift b{color:var(--brass);font-weight:500}
+
+/* ---------- controls ---------- */
+.controls{margin-bottom:22px}
+#q{width:100%;background:var(--panel);color:var(--cream);border:1px solid var(--line);
+  border-radius:3px;padding:12px 13px;font-family:var(--body);font-size:16px}
+#q:focus{outline:2px solid var(--brass);outline-offset:1px}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.filters button{background:var(--panel);border:1px solid var(--line);color:var(--muted);
+  border-radius:3px;font-family:var(--mono);font-size:11px;padding:7px 11px;cursor:pointer}
+.filters button[aria-pressed=true]{background:var(--brass);border-color:var(--brass);
+  color:#12100A;font-weight:500}
+.filters button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+
+/* ---------- category groups ---------- */
+.group{margin-bottom:30px}
+.group h2{font-family:var(--disp);font-weight:700;font-size:20px;letter-spacing:.05em;
+  margin:0 0 3px;color:var(--cream)}
+.group .n{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.07em;
+  margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+
+/* ---------- program card ---------- */
+.p{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);
+  border-radius:3px;padding:14px 15px;margin-bottom:9px}
+.p.urgent{border-left-color:var(--brass)}
+.p.local{border-left-color:#6F63D2;border-color:rgba(111,99,210,.55);
+  background:linear-gradient(180deg,rgba(111,99,210,.13),var(--panel))}
+.p.local h3{color:#A79EF0}
+.p.local .brands span{color:#A79EF0;border-color:rgba(111,99,210,.42)}
+.p.local .when b{color:#A79EF0}
+.localtag{display:inline-block;background:#6F63D2;color:#0B0A1C;border-radius:3px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;padding:3px 8px;margin-bottom:8px}
+.p.gone{opacity:.4}
+.p h3{font-family:var(--disp);font-weight:600;font-size:20px;letter-spacing:.03em;margin:0 0 4px}
+.when{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted);margin:0 0 9px}
+.when b{color:var(--brass);font-weight:500}
+.when .red{color:var(--red)}
+.p p.offer{margin:0;font-size:14.5px;line-height:1.5}
+.p .buyin{font-family:var(--mono);font-size:11px;color:var(--muted);margin:8px 0 0}
+.brands{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.brands span{background:var(--panel2);border:1px solid var(--line);border-radius:99px;
+  color:var(--brass);font-family:var(--mono);font-size:10px;padding:3px 9px;letter-spacing:.03em}
+.pending{margin:9px 0 0;font-family:var(--mono);font-size:10.5px;color:var(--red);letter-spacing:.04em}
+
+/* flyer */
+details.fl{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
+details.fl summary{list-style:none;cursor:pointer;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.09em;color:var(--brass);display:flex;align-items:center;padding:2px 0}
+details.fl summary::-webkit-details-marker{display:none}
+details.fl summary::after{content:"+";font-size:15px;margin-left:auto}
+details.fl[open] summary::after{content:"\2212"}
+details.fl summary:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+details.fl img{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:3px;display:block}
+
+.none{border:1px dashed var(--line);border-radius:3px;padding:28px 18px;text-align:center;
+  color:var(--muted);font-size:14px}
+footer{border-top:1px solid var(--line);margin-top:34px;padding-top:16px;
+  font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1.8;letter-spacing:.04em}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <p class="count" id="count">&nbsp;</p>
+    <p class="through" id="through"></p>
+    <div class="track"><i id="bar" style="width:0"></i></div>
+    <p class="orient">Every WPS program running right now. Nothing is saved to your device — open the
+      link on any phone or laptop and you get the same board.</p>
+  </div>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button type="button" data-v="programs" aria-current="true">Dealer programs</button>
+  <button type="button" data-v="spiffs" aria-current="false">Rep spiffs</button>
+</nav>
+
+<main class="wrap">
+  <section class="view on" id="v-programs">
+  <div class="controls">
+    <input type="search" id="q" placeholder="Search a brand or a program" autocomplete="off">
+    <div class="filters" id="filters"></div>
+  </div>
+  <div id="board"></div>
+  </section>
+
+  <section class="view" id="v-spiffs">
+    <div class="repnote">These are rep incentives, not dealer offers. Nothing here should be shown or
+      quoted to a dealer.</div>
+    <div id="spiffBoard"></div>
+  </section>
+
+  <footer>
+    Order line 800-999-3388 · customerservice@wps-inc.com<br>
+    Most programs must be asked for by name — they don't apply automatically.<br>
+    Orders go through the sales department. Continental US dealers only.
+  </footer>
+</main>
+
+<script>
+const CATS = ["Back Pocket","Tires & Wheels","Riding Gear","Parts & Accessories","Oils & Chemicals","Seasonal","Dealer Programs"];
+
+const PROGRAMS = [
+{cat:"Back Pocket", local:true, name:"Back pocket special — region only", ends:"2026-09-04",
+ offer:"20 Shinko takes 20% off. 20 Sedona takes 20% off. 20 GMax gets 20% off plus a 9% lock; 10 GMax gets 10% off plus a 4% lock. 10 Fire Power chargers takes 10% off. Backorders count only if the item ships in September; anything dated later does not qualify. No terms on these orders and no free items — no displays, nothing thrown in. The discount is the offer.",
+ buyin:"Quantities are per order · must be requested by name",
+ brands:["Shinko","Sedona","GMax","Fire Power"], pdf:"Back_Pocket_Special_Ends_Sept_4_2026.pdf"},
+
+/* ---------- TIRES & WHEELS ---------- */
+{cat:"Tires & Wheels", name:"Bridgestone — buy 5, get 1 free", ends:"2026-09-30",
+ offer:"Every Bridgestone tire qualifies. The least expensive of the six comes free. This one stacks with dealer lock-in discounts, which most don't. No backorders.",
+ brands:["Bridgestone"], img:"sep-bridgestone-buy5.jpg"},
+
+{cat:"Tires & Wheels", name:"System 3 — an extra 5%", ends:"2026-09-30",
+ offer:"SS360, SS365 and ATX470 tires, plus SB8 wheels, take another 5% on top of your lock-in. Wheel kits are excluded.",
+ brands:["System 3"], img:"sep-system3.jpg"},
+
+{cat:"Tires & Wheels", name:"Shinko — buy 6 Peak 017, get 1 free", ends:"2026-09-30",
+ offer:"Six Peak 017 tires earn a seventh free plus a display.",
+ brands:["Shinko"], pending:true},
+
+{cat:"Tires & Wheels", name:"2026 Tire buy-in — lock in your cost", ends:"2026-12-31",
+ offer:"Buy 4, 12, 24, 48, 60 or 250 tires and lock that discount for the rest of the year. Dunlop runs 29% at four tires up to 35% at 250. BFGoodrich 20-23%, Bridgestone 19-25%, Michelin 14-21%, Shinko 12-19%, Sedona tires 10-18%, GBC 8-16%, Maxxis 10-13%, IRC 8-11%, System 3 10-14%, Raceline 3-9%, ITP and Carlisle 5-7%. Terms 30/60 from 24 tires, 30/60/90 from 60. Mix and match any brands to hit the count. Full size only, 16 inch and up. Sister stores can combine if each places 24 and they all go in together. Reorders get the lock-in automatically. Dunlop excludes D404, D605, D952, GPR-300, Roadsport 2, Roadsmart II and Q5A; Shinko excludes 005 and 009; Michelin excludes Twheel kits.",
+ buyin:"4 tires minimum · initial order must be called in or placed on wpsorders.com",
+ brands:["Dunlop","Michelin","Shinko","Bridgestone","BFGoodrich","Sedona","Maxxis","IRC","GBC","ITP","Carlisle","Raceline","System 3"]},
+
+{cat:"Tires & Wheels", name:"Tire quarterly rebate", ends:"2026-12-31",
+ offer:"Grow tire units 50% over the same quarter last year and earn a 0.5% rebate credited quarterly. Double them and it is 1%. Early Bird purchases count toward Q1. Minimum 100 tires to qualify.",
+ buyin:"100 tires",
+ brands:["Dunlop","Michelin","Shinko","Bridgestone","BFGoodrich","Sedona","Maxxis","IRC"]},
+
+/* ---------- RIDING GEAR ---------- */
+{cat:"Riding Gear", name:"100% — free goggles and gloves", ends:"2026-09-30",
+ offer:"Goggles: 26 gets 4 free, 50 gets 8, 100 gets 20. Gloves: 36 gets 6, 54 gets 12, 80 gets 20. The free ones are the lowest-priced on the order. Everything on one order, 75% or more shippable. Four goggle programs and four glove programs per account.",
+ buyin:"Free product must be requested — scan the QR on the flyer",
+ brands:["100%"], img:"sep-100pct-goggles-gloves.jpg"},
+
+{cat:"Riding Gear", name:"100% apparel — pre-order now", ends:"2026-10-31",
+ offer:"Jackets, shirts, hats and socks: buy 10 get 2, buy 20 get 5, buy 30 get 10. Ships October 8. Images land September 8.",
+ brands:["100%"], img:"sep-100pct-apparel-preorder.jpg"},
+
+{cat:"Riding Gear", name:"RST — 15% off boots and shoes", ends:"2026-09-30",
+ offer:"Roadster 3 CE, Sabre Moto CE WP, Adventure-X CE, Tractech Evo D3O WP and short, Hitop Moto CE WP, Womens Axiom CE, Pathfinder CE.",
+ brands:["RST"], img:"sep-rst-boots.jpg"},
+
+{cat:"Riding Gear", name:"RST — 15% off jackets", ends:"2026-09-30",
+ offer:"PS Paragon D3O, S1 D3O textile, Roadster Air D3O, Hillberry D3O, Brixton D3O, Maverick Evo CE, PS Vulcan CE, and the womens Paragon and Roadster Air.",
+ brands:["RST"], img:"sep-rst-jackets.jpg"},
+
+{cat:"Riding Gear", name:"RST — 15% off gloves", ends:"2026-09-30",
+ offer:"Adventure-X CE, Artic D3O WP, Vega WP, Tractech Evo 4 short CE, S1, Fulcrum CE, Atlas CE WP, Freestyle 3 D3O, IOM TT Hillberry 2 CE, K-Sport WP, Pro Series Ranger CE, and the womens Axiom and Artic.",
+ brands:["RST"], img:"sep-rst-gloves.jpg"},
+
+{cat:"Riding Gear", name:"RST — 15% off pants and jeans", ends:"2026-09-30",
+ offer:"Maverick Evo CE jean and short leg, RST Lumberjack CE, PS Paragon D3O LL, PS Vulcan CE, S1 D3O textile.",
+ buyin:"Ask for it — this one doesn't apply automatically",
+ brands:["RST"], img:"sep-rst-pants.jpg"},
+
+{cat:"Riding Gear", name:"Scorpion EXO — 15% off Ryzer helmets", ends:"2026-09-30",
+ offer:"Ten colorways. Gloss black and white at $107.22 dealer, matte black $114.37, the Edge and Switch graphics at $129.97.",
+ brands:["Scorpion EXO"], img:"sep-scorpion-ryzer-helmets.jpg"},
+
+{cat:"Riding Gear", name:"Scorpion EXO — 15% off Optima II and Tempest", ends:"2026-09-30",
+ offer:"Optima II jacket in black, grey and hi-vis at $217.72 dealer through XL, $237.22 in 2X–3X. Tempest short gloves $61.72, Tempest II $71.47.",
+ brands:["Scorpion EXO"], img:"sep-scorpion-jacket-gloves.jpg"},
+
+{cat:"Riding Gear", name:"Rheon — 10% off Level 1 protectors", ends:"2026-09-30",
+ offer:"Type B hip and shoulder pair (667-00100) at $22.71 dealer, curved shoulder pair (667-00108) at $25.96. Universal fit, so they retrofit almost any jacket on the wall.",
+ brands:["Rheon"], img:"sep-rheon-protectors.jpg"},
+
+{cat:"Riding Gear", name:"Fly Racing — MX27 pre-book", ends:"2026-10-31",
+ offer:"Order discount and a separate lock-in, by level: $1,000 gets 6% and 4% lock; $3,000 gets 8% and 6% with 30/60 terms; $7,500 gets 11% and 9%; $15,000 gets 12% and 10%; $30,000 and up gets 14% and 12% with 60/90/120. Pay $3,500 or more in full net 10 prox by check or ACH and take another 2% off the bottom. POD kicker on top: $1,500 in POD earns 3%, $2,000 earns 5%, $2,500 earns 8% plus a 5% lock. Buy 100 or more Fly goggles on the initial order for an extra 3% on goggles, or 25 or more Formula helmets for an extra 3% on helmets. $2,500 in Fly and DBK casual gets you a 50% retail margin. Initial order has to be all gear — pants, jersey, gloves, boots or helmets — on the Fly order form, emailed to flyprebook@flyracing.com. Lock-ins hold through July 31, 2027. Stands alone; will not combine with the helmet and apparel program.",
+ buyin:"$1,000 to start · order form required",
+ brands:["Fly Racing","POD","DBK"]},
+
+{cat:"Riding Gear", name:"Fly Mesh launch — dealer cost", ends:"",
+ offer:"New Fly Mesh gear at dealer cost. $1,500 takes 5% off; $2,500 takes 5% plus a $100 credit toward Fly casual wear, which has to go on the original order. Mens jerseys $44.95 and pants $144.95, youth $39.95 and $139.95. Backorders permitted and ship automatically.",
+ buyin:"$1,500",
+ brands:["Fly Racing"]},
+
+{cat:"Riding Gear", name:"Cardo Venture and Beyond pre-book", ends:"",
+ offer:"Buy 5 and take 5% off with a 3% lock. Buy 10 for 7% and a 5% lock. Buy 15 for 9% and a 5% lock. Locks run through December 31. Venture helmet (71-5200) is $559.99 dealer against $799.95 list, XS-2X, arriving late August. Beyond GTS (71-5201) is $909.99 against $1,299.95, arriving late September. Discounts may not apply to drop ship.",
+ buyin:"5 helmets",
+ brands:["Cardo"]},
+
+{cat:"Riding Gear", name:"2026 Helmet and apparel program", ends:"2026-12-31",
+ offer:"Hit a level on one brand, or combine brands to reach it and every qualifying brand takes its own rate. Four bands: $1,000-7,499, $7,500-14,999, $15,000-29,999, $30,000 and up. Fly, GMax, RST and Scorpion EXO run 6/4, 11/9, 12/10, then 14% stock with a 12% lock. Scott 6/5 up to 11/10. Baffin 6/5 to 11/10. EVS 5/4 to 8/7. 100% 5/4 to 8/7. Gaerne 6/2 to 8/6. Cardo, Exocom and UClear 4/3 to 9/8. DBK and POD 4/3 and 3/2 up to 6/5. Sena 3/2 to 6/5. Highway 21 is on new low pricing instead, up to 60% margin. Minimum $500 per brand. Terms: $2,500 gets 30/60, $7,000 gets 30/60/90, $15,000 gets 60/90. Lock-ins hold through January 31, 2027 and apply to reorders in that brand. Cardo excludes Spirit models. Five additional stocking orders max, each standing alone. Fly MX pre-book will not combine with this.",
+ buyin:"$500 per brand · $1,000 order to reach level one",
+ brands:["Fly Racing","GMax","RST","Scorpion EXO","Scott","Baffin","EVS","100%","Gaerne","Cardo","Exocom","UClear","DBK","POD","Sena","Highway 21"]},
+
+{cat:"Riding Gear", name:"Helmet and apparel — bundle kicker", ends:"2026-12-31",
+ offer:"Add three or more brands to the initial stocking order and take another 3-5% on top. From Fly, GMax, Scorpion EXO, RST and DBK: three brands 3%, four 4%, five 5%. From 100%, EVS, POD and Cardo: three brands 2%, four or five 3%. Excludes Highway 21, Gaerne, Alpinestars and Sena. One buy-in per quarter — Q4 runs October through December and includes Gaerne and Alpinestars at $15,000 and up.",
+ buyin:"3 brands minimum",
+ brands:["Fly Racing","GMax","Scorpion EXO","RST","DBK","100%","EVS","POD","Cardo"]},
+
+{cat:"Riding Gear", name:"Helmet and apparel — Alpinestars levels", ends:"2026-12-31",
+ offer:"Alpinestars runs its own ladder by category. Gloves, shoes and casual: 15% stock and lock at $1,000, up to 24% stock with a 16% lock at $25,000. Boots: 9/9 up to 19% with an 11.3% lock. Helmets and protection: 12/12 up to 20/13. Jackets and pants: 12/12 up to 22/13. Bands are $1,000-4,999, $5,000-9,999, $10,000-24,999 and $25,000 up. All Tech-Air products are excluded.",
+ buyin:"$1,000",
+ brands:["Alpinestars"]},
+
+/* ---------- PARTS & ACCESSORIES ---------- */
+{cat:"Parts & Accessories", name:"All Balls Racing — spend $750, take a display", ends:"2026-10-31",
+ offer:"Spend $750 on All Balls branded product and pick one: slat wall graphics, floor mat, four polos, or a wall tin sign. New items get added monthly.",
+ buyin:"$750 · scan the QR code to redeem",
+ brands:["All Balls"], img:"sep-all-balls-display.jpg"},
+
+{cat:"Parts & Accessories", name:"HardDrive — 8% off touring shocks and cartridge kits", ends:"2026-09-30",
+ offer:"Scepter 49mm cartridge kits, standard and +2 inch, at $449.39 dealer. Touring remote reservoir shocks, 13 and 14 inch, at $1,037.79. All FLH/FLT 14–24.",
+ brands:["HardDrive"], img:"sep-harddrive-touring-shocks.jpg"},
+
+{cat:"Parts & Accessories", name:"Santoro Fabworx — 12% off", ends:"2026-09-30",
+ offer:"Chonies bag deletes — carbon dip $415.99, ABS $215.00 — and black lightbar engine crash bars at $1,017.60 for FLH/FLT. No backorders, while supplies last.",
+ brands:["Santoro Fabworx"]},
+
+{cat:"Parts & Accessories", name:"FLO Motorsports — 8% off", ends:"2026-09-30",
+ offer:"Select pegs, mini boards and floorboards.",
+ brands:["FLO Motorsports"], img:"sep-flo-and-fox.jpg"},
+
+{cat:"Parts & Accessories", name:"Fox — 8% off Indian shocks", ends:"2026-09-30",
+ offer:"QS3-QSR piggyback and dual adjust shocks for Scout at $1,279.99 dealer, and the 41mm grip cartridge for 15–26 non-inverted at $639.99.",
+ brands:["Fox"], img:"sep-flo-and-fox.jpg"},
+
+{cat:"Parts & Accessories", name:"Fire Power — jug and hose program", ends:"",
+ offer:"4 to 16 jugs: no discount, but a free push-in filler hose with each. 20 to 56 jugs: up to 5% off plus the free hose. 60 or more, in pallet quantities: up to 10% off plus the hose. Order in multiples of four of the same color. Upgraded hoses are $3.30 for the screw cap (300-10003) and $4.25 reinforced (300-10012). Sheet updated September 2026 — the screw cap moved up a nickel from the August version.",
+ buyin:"Must be requested by name",
+ brands:["Fire Power"], img:"fire-power-jug-and-hose.jpg"},
+
+{cat:"Parts & Accessories", name:"Fire Power — new pricing on jugs, stands and chargers", ends:"2026-09-30",
+ offer:"Lower pricing on 5-gallon utility jugs and moto stands, plus a new in-line waterproof battery charger.",
+ brands:["Fire Power"], pending:true},
+
+{cat:"Parts & Accessories", name:"Seizmik — 20% off, 31 part numbers", ends:"",
+ offer:"Mirrors, doors, windshields and bed racks on a fixed list. Mirror inserts and accent sets at $9.09 dealer, Halo R bezel kits $13.99, Halo R mirror can $58.79, RA and Halo-RA cast mirrors $82.59, Trailrider side mirrors $83.99, soft rear dust panel $119.69, rear view and Halo-RA LED 2.0 at $122.49, Photon side mirrors $142.99 and $145.59, soft full doors $203.69, Pursuit LED mirror pairs $204.39, fender flares $259.69, Versa-Vent windshield $270.19, Versa Fold GP $294.69 and HC $385.69, Honda cargo bed extender $398.99, General dump bed rack $412.29, TL Versa Vent $433.29, framed door kit $636.29, Ranger mid size doors $784.69. Applies automatically, unlike most of these. No backorders, while supplies last. Stacks with the Seizmik BOGO.",
+ buyin:"Listed part numbers only · order through customer service",
+ brands:["Seizmik"]},
+
+{cat:"Parts & Accessories", name:"RFX — free display", ends:"",
+ offer:"$1,500 in RFX product earns a free display. $3,000 earns a 3% stock and lock plus the display. $4,500 earns 5% plus the display. Displays ship from WPS — metal display is part 739-1303.",
+ buyin:"$1,500",
+ brands:["RFX"]},
+
+/* ---------- OILS & CHEMICALS ---------- */
+{cat:"Oils & Chemicals", name:"Bel-Ray — 55 gallon drums", ends:"2026-09-30",
+ offer:"10w40 (840-0020) at $660 against a $1,019.95 list. 20w50 (840-0021) at $900 against $1,449.55. Drums ship free freight, but a lift gate is $45 extra if the dealer needs one.",
+ brands:["Bel-Ray"], img:"sep-bel-ray-drums.jpg"},
+
+{cat:"Oils & Chemicals", name:"Klotz — buy 7 gallons, get 1 free", ends:"2026-09-30",
+ offer:"Gallon 2-strokes: Super Techniplate, R50, Benol castor, TC-W2 and TC-W3, Skicraft, 2T outboard, and the TC-W3 synthetic. Case quantity only, no mixing across part numbers, no backorders.",
+ brands:["Klotz"], img:"sep-klotz-gallons.jpg"},
+
+{cat:"Oils & Chemicals", name:"Klotz — buy 8 bottles, get 2 free", ends:"2026-09-30",
+ offer:"32oz and 16oz 2-strokes across nine part numbers. Case quantity only, no mixing, no backorders.",
+ brands:["Klotz"], img:"sep-klotz-bottles.jpg"},
+
+{cat:"Oils & Chemicals", name:"Red Line — spend $1,500, free display", ends:"2026-09-30",
+ offer:"Display comes free at the $1,500 level.",
+ buyin:"$1,500",
+ brands:["Red Line"], pending:true},
+
+{cat:"Oils & Chemicals", name:"Maxima — lubricant stocking", ends:"2026-09-30",
+ offer:"Inventory and stocking opportunities across the Maxima line.",
+ brands:["Maxima"], pending:true},
+
+/* ---------- SEASONAL ---------- */
+{cat:"Seasonal", name:"2027 Snow hard parts pre-book", ends:"2026-10-31",
+ offer:"13% on Bel-Ray, Klotz, Maxima and Motul. 10% on All Balls, Garland, Spectro and Vertex gaskets. 8% on Engine Ice, Hot Rods, K100 and Star Brite. 5% across most other snow lines including Camso tracks, C&A Pro, EPI, Koso, PPD, Powermadd, Rox, RSI, Seizmik, Sena, Slydog, SLP, Straightline, Super Caddy, Superclamp, Venom, V-Force and Warn. Ultimax belts 3%. Stock and lock: SP1 15%, Woodys 13%, Dayco 12%, NGK 12%, Stud Boy 11%, Caliber 10%, MBRP snow 3%. Lock-ins hold through April 30, 2027. Will not combine with the monthly specials.",
+ buyin:"Terms from $2,500 · cash discount to 3% at $15,000",
+ brands:["Camso","Woodys","Stud Boy","SP1","Klotz","Maxima","Vertex","All Balls","NGK","Garland","Caliber","Dayco","Ultimax"]},
+
+{cat:"Dealer Programs", name:"2026 Motorcycle and ATV/UTV dating", ends:"2026-11-30",
+ offer:"$5,000 gets 30/60 days, $10,000 gets 30/60/90, $15,000 and $25,000 get 60/90/120. Or take cash back instead of terms — 1.5% up to 3.5% — paid net 10 prox by check or ACH. Tire dollars count toward the levels but earn no cash or credit. Fly and Alpinestars MX gear over $5,000 goes on its own order. Snow product and Camso tracks excluded; plows are in.",
+ buyin:"$5,000 minimum · comment MOTORCYCLE DATING on the order",
+ brands:[]},
+
+{cat:"Dealer Programs", name:"SMX26 playoffs — dealer VIP tickets", ends:"",
+ offer:"Buy in at dealer cost on exclusive brands and take a seat in the WPS section. $1,250 a ticket covers Fan Fest, the Fly Racing activation area, WPS hospitality and stadium entry, limit six. $1,750 adds a Fly Racing elite athlete autographed jersey, one upgrade. $2,500 adds two jerseys. Jersey choice is made when you order — Cooper Webb, RJ Hampshire, Chance Hymas, Lucas Coenen or Sacha Coenen. Qualifying brands: Fly Racing, GMax, Fire Power, HardDrive, Highway 21, Open Trail, Sedona, Shinko, Scorpion EXO, All Balls, Tiger Lights, Cylinder Works, Hot Cams, Hot Rods, Pivot Works, Vertex, UClear, POD, RFX, RST and SP1. First come, first served.",
+ buyin:"$1,250 per ticket · six max per dealership",
+ brands:["Fly Racing","GMax","Fire Power","HardDrive","Highway 21","Open Trail","Sedona","Shinko","Scorpion EXO","All Balls","Cylinder Works","Hot Cams","Hot Rods","Pivot Works","Vertex","UClear","POD","RFX","RST","SP1"]}
+];
+
+/* ---------- deadline hero ---------- */
+(function(){
+  const now=new Date();
+  const end=new Date(now.getFullYear(),now.getMonth()+1,0);
+  const start=new Date(now.getFullYear(),now.getMonth(),1);
+  const days=Math.max(0,Math.round((end-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5));
+  const month=start.toLocaleDateString(undefined,{month:'long'});
+  document.getElementById('count').innerHTML =
+    days===0 ? 'Last day of <em>'+month+'</em>'
+             : '<em>'+days+'</em> day'+(days===1?'':'s')+' left in '+month;
+  document.getElementById('through').textContent =
+    'Most programs run through '+end.toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});
+  const pct=Math.min(100,Math.round(((now-start)/(end-start))*100));
+  document.getElementById('bar').style.width=pct+'%';
+})();
+
+/* ---------- render ---------- */
+const today=new Date().toISOString().slice(0,10);
+let filter='', cat='';
+
+function daysTo(iso){
+  if(!iso) return null;
+  return Math.round((new Date(iso+'T00:00:00') - new Date(today+'T00:00:00'))/864e5);
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function whenLine(p){
+  if(!p.ends) return '<p class="when">Runs until further notice</p>';
+  const d=daysTo(p.ends);
+  const nice=new Date(p.ends+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  if(d<0) return '<p class="when"><span class="red">Ended '+nice+'</span></p>';
+  if(d===0) return '<p class="when"><b>Ends today</b></p>';
+  if(d<=10) return '<p class="when"><b>'+d+' day'+(d===1?'':'s')+' left</b> · through '+nice+'</p>';
+  return '<p class="when">Through '+nice+'</p>';
+}
+
+function card(p){
+  const d=daysTo(p.ends);
+  const cls='p'+(d!==null&&d<0?' gone':'')+(d!==null&&d>=0&&d<=10&&!p.local?' urgent':'')+(p.local?' local':'');
+  return '<article class="'+cls+'">'
+    +(p.local?'<div class="localtag">Your region only — not national</div>':'')
+    +'<h3>'+esc(p.name)+'</h3>'
+    +whenLine(p)
+    +'<p class="offer">'+esc(p.offer)+'</p>'
+    +(p.buyin?'<p class="buyin">'+esc(p.buyin)+'</p>':'')
+    +(p.pending?'<p class="pending">Flyer not loaded yet — confirm the detail before you quote it</p>':'')
+    +(p.brands&&p.brands.length?'<div class="brands">'+p.brands.map(b=>'<span>'+esc(b)+'</span>').join('')+'</div>':'')
+    +(p.pdf?'<details class="fl"><summary>Open the one-page sheet</summary>'
+        +'<p style="margin-top:9px"><a href="'+esc(p.pdf)+'" target="_blank" rel="noopener">'
+        +esc(p.pdf)+'</a></p></details>':'')
+    +(p.img?'<details class="fl"><summary>See the flyer</summary>'
+        +'<img loading="lazy" alt="'+esc(p.name)+' flyer" src="'+esc(p.img)+'"></details>':'')
+    +'</article>';
+}
+
+function render(){
+  const q=filter.toLowerCase();
+  const hits=PROGRAMS.filter(p=>{
+    if(cat && p.cat!==cat) return false;
+    if(!q) return true;
+    return (p.name+' '+p.offer+' '+(p.brands||[]).join(' ')).toLowerCase().includes(q);
+  });
+  const board=document.getElementById('board');
+  if(!hits.length){
+    board.innerHTML='<p class="none">Nothing matches that. Try a brand name, or clear the search.</p>';
+    return;
+  }
+  const order=p=>{const d=daysTo(p.ends);return d===null?9999:(d<0?99999:d);};
+  board.innerHTML=CATS.filter(c=>hits.some(p=>p.cat===c)).map(c=>{
+    const inC=hits.filter(p=>p.cat===c).sort((a,b)=>
+      order(a)-order(b) || a.name.localeCompare(b.name,undefined,{sensitivity:'base',numeric:true}));
+    return '<section class="group"><h2>'+esc(c)+'</h2>'
+      +'<p class="n">'+inC.length+' program'+(inC.length===1?'':'s')+'</p>'
+      +inC.map(card).join('')+'</section>';
+  }).join('');
+}
+
+document.getElementById('filters').innerHTML =
+  ['All'].concat(CATS).map(c=>'<button type="button" data-c="'+esc(c==='All'?'':c)+'" aria-pressed="'
+    +(c==='All'?'true':'false')+'">'+esc(c)+'</button>').join('');
+
+document.getElementById('filters').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  cat=b.dataset.c;
+  [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+  render();
+});
+const SPIFFS=[
+{name:"Bridgestone rep spiff", prize:"$1,000 · September 1 to October 31",
+ who:"Top three outside reps, one per region, plus the top HardDrive rep and the top inside sales rep.",
+ body:"Two ways to win. First, sell a minimum of 50 tires across all dealers between September 1 and October 31. Second, sign the highest number of new Bridgestone dealers in that window. A new dealer is one at $1,500 or less year to date. Ties break on most units sold. You have to still be at WPS when it pays out.",
+ lift:"<b>43 of your 44 dealers</b> count as new — everyone except GP Cyclesports. Thirty are at zero Bridgestone this year. The closest to aging out are HNH at $1,426 and Brenny's at $1,189; both cross $1,500 on almost any order, so sign them before they buy."},
+{name:"RST — Isle of Man trip", prize:"VIP trip · January 1 to December 31, winner named January 2027",
+ who:"Highest points across the year. Bricks and mortar dealers only.",
+ body:"Points come from beating target, where target is a 15% increase over prior year: 5 points at 5% above, 10 at 10%, 15 at 15%. New dealers pay separately — 5 points each for the first five, with a 5 point bonus at five. Dealers six through ten are worth 10 points each plus a 10 point bonus at ten. Eleven through fifteen are 15 each plus a 15 point bonus. Ties break on percentage growth. Round trip airfare, VIP race access and ground transport included.",
+ lift:"<b>42 of 44 dealers</b> are under the $1,500 RST bar, 36 of them at zero. Joe's Powersports and Hammertime are the two that don't count — and they went from nothing to $10,063 and $6,266 this year, which is the argument for everyone else. Fifteen new dealers is worth 150 points plus 30 in bonuses."},
+{name:"Sena — Isle of Man trip", prize:"VIP trip · June 1 to December 31, winner named January 2027",
+ who:"Same points structure as RST. Bricks and mortar dealers only.",
+ body:"Same ladder: 5, 10 and 15 points for beating a target set at 15% over prior year, plus 5, 10 and 15 points per new dealer with bonuses at five, ten and fifteen. Here a new dealer is one with no Sena purchase in a rolling twelve months from June 26. Airfare, luxury hotel, VIP access and ground transport included.",
+ lift:"<b>38 of 44 dealers</b> have bought no Sena at all this year. Sena is also down $2,329 at Brenny's and $2,207 at Loves Park, so there are existing accounts to win back on top of the new ones."}
+];
+document.getElementById('spiffBoard').innerHTML=SPIFFS.map(x=>
+  '<article class="s"><h3>'+esc(x.name)+'</h3>'
+  +'<p class="prize">'+esc(x.prize)+'</p>'
+  +'<p>'+esc(x.who)+'</p><p>'+esc(x.body)+'</p>'
+  +'<div class="lift">'+x.lift+'</div></article>').join('');
+
+document.getElementById('tabs').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-current',x===b?'true':'false'));
+  document.getElementById('v-programs').classList.toggle('on',b.dataset.v==='programs');
+  document.getElementById('v-spiffs').classList.toggle('on',b.dataset.v==='spiffs');
+});
+
+document.getElementById('q').addEventListener('input',e=>{filter=e.target.value;render();});
+render();
+</script>
+</body>
+</html>

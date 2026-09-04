@@ -153,7 +153,7 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding-top:16px;
   </section>
 
   <footer>
-    <span style="color:var(--brass)">Build 6</span> · 38 programs · flyers loaded Sept 2, 2026<br>
+    <span style="color:var(--brass)">Build 7</span> · 38 programs · flyers loaded Sept 2, 2026<br>
     Order line 800-999-3388 · customerservice@wps-inc.com<br>
     Most programs must be asked for by name — they don't apply automatically.<br>
     Orders go through the sales department. Continental US dealers only.
@@ -379,26 +379,6 @@ function whenLine(p){
   return '<p class="when">Through '+nice+'</p>';
 }
 
-function mailLink(p){
-  const base=location.href.split(/[?#]/)[0].replace(/[^/]*$/,'');
-  const files=[].concat(p.img||[]).concat(p.pdf?[p.pdf]:[]);
-  if(!files.length) return '';
-  const when=p.ends?('Runs through '+new Date(p.ends+'T00:00:00')
-      .toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'}))
-    :'No end date announced';
-  let offer=p.offer||'';
-  if(offer.length>600) offer=offer.slice(0,600).replace(/\s\S*$/,'')+'...';
-  const body=[p.name,'',when,'',offer,'',
-    files.length>1?'Flyer pages:':'Flyer:',...files.map(f=>base+f),'',
-    'Ask for it by name when you order — most of these do not apply automatically.',
-    'WPS order line 800-999-3388'].join('\n');
-  const save=files.map((f,i)=>'<a class="mail" href="'+esc(f)+'" download>Save the flyer'
-    +(files.length>1?' — page '+(i+1):'')+'</a>').join('');
-  return '<div class="acts">'+save
-    +'<a class="mail" href="mailto:?subject='+encodeURIComponent(p.name)
-    +'&body='+encodeURIComponent(body)+'">Email this to a dealer</a></div>';
-}
-
 function card(p){
   const d=daysTo(p.ends);
   const cls='p'+(d!==null&&d<0?' gone':'')+(d!==null&&d>=0&&d<=10&&!p.local?' urgent':'')+(p.local?' local':'');
@@ -416,7 +396,6 @@ function card(p){
     +(p.img?(function(){const a=[].concat(p.img);
         return '<details class="fl"><summary>See the flyer'+(a.length>1?' ('+a.length+' pages)':'')+'</summary>'
         +a.map(u=>'<img loading="lazy" alt="'+esc(p.name)+' flyer" src="'+esc(u)+'">').join('')+'</details>';})():'')
-    +mailLink(p)
     +'</article>';
 }
 

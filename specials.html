@@ -146,7 +146,7 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding-top:16px;
   </section>
 
   <footer>
-    <span style="color:var(--brass)">Build 2</span> · 37 programs · flyers loaded Sept 2, 2026<br>
+    <span style="color:var(--brass)">Build 3</span> · 38 programs · flyers loaded Sept 2, 2026<br>
     Order line 800-999-3388 · customerservice@wps-inc.com<br>
     Most programs must be asked for by name — they don't apply automatically.<br>
     Orders go through the sales department. Continental US dealers only.
@@ -187,6 +187,11 @@ const PROGRAMS = [
  brands:["Dunlop","Michelin","Shinko","Bridgestone","BFGoodrich","Sedona","Maxxis","IRC"], img:"flyer-tire-buyin-2.jpg"},
 
 /* ---------- RIDING GEAR ---------- */
+{cat:"Riding Gear", name:"USWE — three buy-in levels", ends:"2026-10-31",
+ offer:"Three ways in, all at 15% off. Program 1: three Moto Hydro (two black, one your choice) and three Zulo 2 Moto in any colour, for 15% off and a free display — up to $105 saved. Program 2 adds three Outlander Moto (two black, one your choice) and gets you the Buddy 150L gear trolley bag (62-03021) at half price on top of the 15% and the display — up to $291. Program 3 is $5,000 of any USWE product for 15% off, the Buddy 150L free, and the display — up to $1,000. Display options are a brand header with hydration pack rack, a floor display, or a floor display with a half body mannequin, plus dealer stickers. Displays ship from USWE, not WPS — email the request and a copy of the qualifying invoice to jason.mccure@uswe.com.",
+ buyin:"Six packs for Program 1 · $5,000 for Program 3",
+ brands:["USWE"], img:["flyer-uswe-program-1.jpg","flyer-uswe-program-2.jpg","flyer-uswe-program-3.jpg","flyer-uswe-program-4.jpg"]},
+
 {cat:"Riding Gear", name:"100% — free goggles and gloves", ends:"2026-09-30",
  offer:"Goggles: 26 gets 4 free, 50 gets 8, 100 gets 20. Gloves: 36 gets 6, 54 gets 12, 80 gets 20. The free ones are the lowest-priced on the order. Everything on one order, 75% or more shippable. Four goggle programs and four glove programs per account.",
  buyin:"Free product must be requested — scan the QR on the flyer",
@@ -424,6 +429,11 @@ const SPIFFS=[
  who:"Top three outside reps, one per region, plus the top HardDrive rep and the top inside sales rep.",
  body:"Two ways to win. First, sell a minimum of 50 tires across all dealers between September 1 and October 31. Second, sign the highest number of new Bridgestone dealers in that window. A new dealer is one at $1,500 or less year to date. Ties break on most units sold. You have to still be at WPS when it pays out.",
  lift:"<b>43 of your 44 dealers</b> count as new — everyone except GP Cyclesports. Thirty are at zero Bridgestone this year. The closest to aging out are HNH at $1,426 and Brenny's at $1,189; both cross $1,500 on almost any order, so sign them before they buy."},
+{name:"USWE rep spiff", prize:"$350, $250 and $150 gas cards · September 1 to October 31",
+ who:"Three winners per region — inside sales, west, central and east. Paid through USWE.",
+ body:"Same ladder as the Isle of Man incentives: 5 points for beating target by 5%, 10 at 10%, 15 at 15%, where target is a 15% increase over prior year. New dealers pay 5 points each for the first five with a 5 point bonus at five, 10 each for dealers six through ten with a 10 point bonus, 15 each for eleven through fifteen with a 15 point bonus. A new dealer is one with no USWE purchase in the rolling twelve months from September 2025 through August 2026. Bricks and mortar only, tandem account totals split between reps, ties break on percentage growth.",
+ lift:"<b>41 of your 44 dealers have never bought USWE</b> and one more lapsed. Only D&W at $61 and Halls at $29 are active, and both are tiny — so almost your whole territory counts as new, and the dealer program starts at six packs. Ten new dealers is 75 points plus bonuses in two months.",
+ img:["flyer-uswe-spiff-1.jpg","flyer-uswe-spiff-2.jpg"]},
 {name:"RST — Isle of Man trip", prize:"VIP trip · January 1 to December 31, winner named January 2027",
  who:"Highest points across the year. Bricks and mortar dealers only.",
  body:"Points come from beating target, where target is a 15% increase over prior year: 5 points at 5% above, 10 at 10%, 15 at 15%. New dealers pay separately — 5 points each for the first five, with a 5 point bonus at five. Dealers six through ten are worth 10 points each plus a 10 point bonus at ten. Eleven through fifteen are 15 each plus a 15 point bonus. Ties break on percentage growth. Round trip airfare, VIP race access and ground transport included.",
@@ -437,7 +447,10 @@ document.getElementById('spiffBoard').innerHTML=SPIFFS.map(x=>
   '<article class="s"><h3>'+esc(x.name)+'</h3>'
   +'<p class="prize">'+esc(x.prize)+'</p>'
   +'<p>'+esc(x.who)+'</p><p>'+esc(x.body)+'</p>'
-  +'<div class="lift">'+x.lift+'</div></article>').join('');
+  +'<div class="lift">'+x.lift+'</div>'
+  +(x.img?'<details class="fl"><summary>See the flyer'+(x.img.length>1?' ('+x.img.length+' pages)':'')+'</summary>'
+     +[].concat(x.img).map(u=>'<img loading="lazy" alt="'+esc(x.name)+' flyer" src="'+esc(u)+'">').join('')+'</details>':'')
+  +'</article>').join('');
 
 document.getElementById('tabs').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;

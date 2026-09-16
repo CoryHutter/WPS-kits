@@ -82,8 +82,8 @@ nav button{font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <div class="wrap" id="app"></div>
-<input type="file" id="file" accept=".csv,text/csv" hidden>
-<input type="file" id="bfile" accept=".txt,text/plain" hidden>
+<input type="file" id="file" hidden>
+<input type="file" id="bfile" hidden>
 <script>
 const SEED=``;
 
@@ -107,20 +107,27 @@ function parseCSV(t){const rows=[];let row=[],f='',q=false;
  row.push(f);if(row.some(x=>x.trim()))rows.push(row);return rows}
 
 function toSnapshot(text){
- const rows=parseCSV(text.replace(/^\uFEFF/,''));
- if(rows.length<2)throw new Error('That file has no dealer rows.');
- const h=rows[0].map(x=>x.trim().toLowerCase());
- for(const n of['dealer#','name','last order','mtd$','ytd$','prior 12'])
-  if(h.indexOf(n)<0)throw new Error('This file is missing the "'+n+'" column. Use the Excel button on the WPS Dealers page.');
- const g=(r,n)=>{const i=h.indexOf(n);return i<0?'':String(r[i]||'').trim()};
- const num=s=>{const v=parseFloat(String(s).replace(/[$,\s]/g,''));return isFinite(v)?v:0};
- const dt=s=>{const m=s.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);return m?`${m[1]}-${m[2]}-${m[3]}`:null};
- const dealers=rows.slice(1).filter(r=>g(r,'dealer#')).map(r=>({
-  id:g(r,'dealer#'),name:g(r,'name').replace(/\s+/g,' '),city:g(r,'city'),tc:g(r,'tc level'),phone:g(r,'phone#'),
-  lo:dt(g(r,'last order')),bal:num(g(r,'balance$')),mcr:num(g(r,'mtd cr/rtn$')),
-  mtd:num(g(r,'mtd$'))+num(g(r,'mtd cr/rtn$')),ytd:num(g(r,'ytd$'))+num(g(r,'ytd cr/rtn$')),p12:num(g(r,'prior 12'))}));
+ text=String(text).replace(/^\uFEFF/,'');
+ const first=text.split(/\r?\n/).find(l=>l.trim())||'';
+ const rows=first.includes('\t')||/\t/.test(text.slice(0,2000))?text.split(/\r?\n/).filter(l=>l.trim()).map(l=>l.split('\t')):parseCSV(text);
+ const hi=rows.findIndex(r=>r.some(c=>/dealer/i.test(c))&&r.some(c=>/mtd/i.test(c)));
+ if(hi<0)throw new Error('Could not find the dealer table. Use Copy to Clipboard or Excel on the WPS Dealers page.');
+ const nk=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+ const h=rows[hi].map(nk);
+ const col=(...keys)=>{for(const k of keys){const i=h.indexOf(k);if(i>=0)return i}for(const k of keys){const i=h.findIndex(x=>x.startsWith(k));if(i>=0)return i}return -1};
+ const C={id:col('dealer'),name:col('name'),phone:col('phone'),city:col('city'),tc:col('tclevel'),lo:col('lastorder'),bal:col('balance'),mtd:col('mtd'),mcr:h.indexOf('mtdcrrtn'),ytd:col('ytd'),ycr:h.indexOf('ytdcrrtn'),p12:col('prior12')};
+ for(const k of ['id','name','lo','mtd','p12'])if(C[k]<0)throw new Error('Missing a needed column ('+k+'). Use Copy to Clipboard or Excel on the WPS Dealers page.');
+ const g=(r,k)=>C[k]<0?'':String(r[C[k]]||'').trim();
+ const num=s=>{let x=String(s).trim();const neg=/^\(.*\)$/.test(x)||x.startsWith('-')||x.endsWith('-');const v=parseFloat(x.replace(/[$,\s()\-]/g,''));return isFinite(v)?(neg?-v:v):0};
+ const dt=s=>{const m=s.match(/(\d{4})\/(\d{2})\/(\d{2})/);return m?`${m[1]}-${m[2]}-${m[3]}`:null};
+ const hasCr=C.mcr>=0,hasYcr=C.ycr>=0;
+ const dealers=rows.slice(hi+1).filter(r=>/^\d+$/.test(g(r,'id'))&&g(r,'name')&&!r.some(c=>/totals/i.test(c))).map(r=>({
+  id:g(r,'id'),name:g(r,'name').replace(/\s+/g,' '),city:g(r,'city'),tc:g(r,'tc'),phone:g(r,'phone'),
+  lo:dt(g(r,'lo')),bal:num(g(r,'bal')),mcr:hasCr?num(g(r,'mcr')):0,
+  mtd:num(g(r,'mtd'))+(hasCr?num(g(r,'mcr')):0),ytd:num(g(r,'ytd'))+(hasYcr?num(g(r,'ycr')):0),p12:num(g(r,'p12'))}));
+ if(!dealers.length)throw new Error('No dealer rows found in what was pasted.');
  const asOf=dealers.map(d=>d.lo).filter(Boolean).sort().pop();
- if(!asOf)throw new Error('Could not find any order dates in this file.');
+ if(!asOf)throw new Error('Could not find any order dates.');
  return{asOf,dealers};
 }
 
@@ -292,12 +299,31 @@ async function init(){
 
 function loaded(){return index.filter(d=>snaps[d])}
 
+
+function pastePanel(){return`<div class="set" style="max-width:720px;margin:0 auto 12px"><b>Paste dealer data</b>
+ <p class="hint" style="margin:4px 0 8px">On the WPS Dealers page tap <b>Copy to Clipboard</b>. Then press and hold in the box below and tap Paste.</p>
+ <textarea id="pastebox" rows="5" style="width:100%;font:13px ui-monospace,Menlo,monospace;padding:8px;border:1px solid var(--line);border-radius:8px" placeholder="Paste here"></textarea>
+ <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" data-act="pasteload">Load pasted data</button>${loaded().length?'<button class="btn line" data-act="pasteclose">Close</button>':''}</div></div>`}
+async function loadDealerText(txt){
+ try{
+  if(!txt.trim())throw new Error('Nothing was pasted yet.');
+  const s=toSnapshot(txt);const had=!!snaps[s.asOf];
+  const ok=await saveSnap(s);view.tab='dealers';view.paste=false;
+  const t=compute(loaded(),snaps,settings);
+  view.note={t:`${had?'Replaced':'Added'} sales through ${fmtDate(s.asOf,true)}. ${t.ordered} dealers ordered${t.asOf===s.asOf&&t.daySum!=null?', '+money(t.daySum)+' since the last file':''}.${ok||!canSave()?'':' This day could not be saved, so it will be gone next time.'}`};
+ }catch(err){view.note={t:err.message,err:true}}
+ render();
+}
+
 function render(){
  const app=document.getElementById('app'),idx=loaded();
  const note=view.note?`<div class="note ${view.note.err?'err':''}" role="status">${esc(view.note.t)}</div>`:'';
  if(!idx.length){
-  app.innerHTML=`<header><div class="top"><h1>Territory pace</h1><button class="btn" data-act="upload">Upload dealer file</button></div></header>
-  <main>${note}<div class="empty">Open the Dealers page in the WPS sales portal, tap Excel, then upload that file here.</div></main>`;return;
+  app.innerHTML=`<header><div class="top"><h1>Territory pace</h1><button class="btn line" data-act="upload">Upload file</button></div></header>
+  <main>${note}${pastePanel()}
+  <div class="set" style="max-width:520px;margin:0 auto"><b>Brand data</b><p class="hint" style="margin:4px 0 10px">${brands?`Unlocked: ${Object.keys(brands.dealers).length} dealers.`:'Not unlocked yet. You can do this before or after uploading.'}</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="bpass" type="password" autocomplete="off" placeholder="Passcode" style="font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;flex:1;min-width:180px">
+  <button class="btn" data-act="unlock">Unlock brand data</button></div></div></main>`;return;
  }
  const t=compute(idx,snaps,settings);
  const p=t.goalMonth?t.proj/t.goalMonth:0,lit=Math.round(Math.min(p,1)*24);
@@ -306,7 +332,7 @@ function render(){
  app.innerHTML=`
  <header>
   <div class="top"><h1>Territory pace<small>Sales through ${fmtDate(t.asOf,true)}</small></h1>
-  <button class="btn" data-act="upload">Upload today's file</button></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" data-act="paste">Paste data</button><button class="btn line" data-act="upload">Upload file</button></div></div>
   <div class="proj"><div class="big">${money(t.proj)}</div>
    <div class="sub">Projected for ${monthName(t.asOf)} at the current pace</div>
    <div class="strip" role="img" aria-label="${pctTxt(p)} of monthly goal">${segs}</div>
@@ -323,7 +349,7 @@ function render(){
   <div class="stat"><b>${t.list.filter(d=>d.idle==null||d.idle>=settings.idle).length}</b><span>Dealers with no order in ${settings.idle}+ days</span></div>
  </div>
  <nav role="tablist">${[['dealers','Dealers'],['targets','Targets'],['calls','Call list'],['daily','Daily'],['settings','Settings']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${view.tab===k}">${l}</button>`).join('')}</nav>
- <main>${note}${view.tab==='dealers'?dealersTab(t):view.tab==='targets'?targetsTab(t):view.tab==='calls'?callsTab(t):view.tab==='daily'?dailyTab(t,idx):settingsTab(t)}</main>`;
+ <main>${note}${view.paste?pastePanel():''}${view.tab==='dealers'?dealersTab(t):view.tab==='targets'?targetsTab(t):view.tab==='calls'?callsTab(t):view.tab==='daily'?dailyTab(t,idx):settingsTab(t)}</main>`;
 }
 
 function dealersTab(t){
@@ -445,6 +471,9 @@ document.addEventListener('click',async e=>{
   index=index.filter(x=>x!==d);delete snaps[d];await sdel(K.snap(d));await sset(K.idx,index);view.note={t:'Removed '+fmtDate(d)+'.'};render();return}
  if(b.dataset.act==='upload')document.getElementById('file').click();
  if(b.dataset.act==='brandfile')document.getElementById('bfile').click();
+ if(b.dataset.act==='paste'){view.paste=true;render();return}
+ if(b.dataset.act==='pasteclose'){view.paste=false;render();return}
+ if(b.dataset.act==='pasteload'){await loadDealerText((document.getElementById('pastebox')||{}).value||'');return}
  if(b.dataset.act==='unlock'){const v=(document.getElementById('bpass')||{}).value||'';if(!v.trim()){view.note={t:'Type the passcode first.',err:true};render();return}
   try{brands=await unlockBrands(v);const ok=await sset(K.brands,brands);view.tab='targets';view.note={t:`Brand data unlocked for ${Object.keys(brands.dealers).length} dealers.${ok||!canSave()?'':' It could not be saved, so you will need to unlock again next time.'}`}}catch(err){view.note={t:err.message,err:true}}render();return}
  if(b.dataset.pitch){const [id]=b.dataset.pitch.split('|');const t=compute(loaded(),snaps,settings);const d=t.list.find(x=>x.id===id);
@@ -460,15 +489,7 @@ document.addEventListener('change',async e=>{
  if(el.id==='bfile'&&el.files[0]){try{brands=parseBrandFile(await el.files[0].text());const ok=await sset(K.brands,brands);view.tab='targets';view.note={t:`Brand data loaded for ${Object.keys(brands.dealers).length} dealers.${ok||!canSave()?'':' It could not be saved, so it will be gone next time.'}`}}catch(err){view.note={t:err.message,err:true}}el.value='';render();return}
  if(el.id==='goal'||el.id==='idle'){const v=parseFloat(el.value);if(isFinite(v)&&v>=(el.id==='idle'?1:0)){settings[el.id]=v;await sset(K.set,settings);render()}return}
  if(el.dataset.inc){const id=el.dataset.inc;settings.exclude=el.checked?settings.exclude.filter(x=>x!==id):[...settings.exclude,id];await sset(K.set,settings);render();return}
- if(el.id==='file'&&el.files[0]){
-  try{
-   const s=toSnapshot(await el.files[0].text());const had=!!snaps[s.asOf];
-   const ok=await saveSnap(s);view.tab='dealers';
-   const t=compute(loaded(),snaps,settings);
-   view.note={t:`${had?'Replaced':'Added'} sales through ${fmtDate(s.asOf,true)}. ${t.ordered} dealers ordered${t.asOf===s.asOf&&t.daySum!=null?', '+money(t.daySum)+' since the last file':''}.${ok||!canSave()?'':' This day could not be saved, so it will be gone next time.'}`};
-  }catch(err){view.note={t:err.message,err:true}}
-  el.value='';render();
- }
+ if(el.id==='file'&&el.files[0]){const f=el.files[0];el.value='';await loadDealerText(await f.text());}
 });
 init();
 </script>

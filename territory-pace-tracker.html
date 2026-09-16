@@ -67,6 +67,9 @@ h2{font-size:16px;margin:18px 4px 4px}
 nav button{font-size:13px;padding:13px 2px}
 textarea,input[type=date],input[type=search]{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%}
 .note{white-space:pre-wrap}
+details.fl{margin:6px 0 8px}
+details.fl summary{cursor:pointer;font-weight:600;font-size:14px;padding:6px 0;color:var(--ink)}
+details.fl img{width:100%;display:block;margin-top:8px;border:1px solid var(--line);border-radius:6px}
 .tg{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px}
 .tg h3{margin:0;font-size:16px}
 .tg .sum{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--slate);margin:4px 0 8px}
@@ -273,7 +276,7 @@ async function loadSpecials(){
   const r=await fetch('specials.html',{cache:'no-cache'});if(!r.ok)throw 0;
   const m=(await r.text()).match(/const PROGRAMS\s*=\s*(\[[\s\S]*?\n\]);/);if(!m)throw 0;
   const arr=Function('"use strict";return '+m[1])();
-  specials={list:arr.map(p=>({name:p.name,ends:p.ends||'',brands:p.brands||[],offer:p.offer||'',cat:p.cat||'',local:!!p.local})),src:'Specials Board'};
+  specials={list:arr.map(p=>({name:p.name,ends:p.ends||'',brands:p.brands||[],offer:p.offer||'',cat:p.cat||'',local:!!p.local,img:[].concat(p.img||[]),pdf:p.pdf||''})),src:'Specials Board'};
  }catch(e){specials={list:FALLBACK,src:'built-in September list'}}
 }
 function matchSpecials(brand){
@@ -458,10 +461,12 @@ function specialsTab(t){
   return`<div class="tg"><h3>${esc(p.name)}</h3>
   <div class="sum"><span class="${dl!=null&&dl<=7?'neg':''}"><em>${dl==null?'Ongoing':dl===0?'Ends today':dl+' days left'}</em></span>${p.local?'<span><em>Your region only</em></span>':''}${p.brands.length?`<span>${esc(p.brands.slice(0,8).join(', '))}${p.brands.length>8?'...':''}</span>`:''}</div>
   ${p.offer?`<p class="hint" style="margin:0 0 8px;color:var(--ink)">${esc(p.offer)}</p>`:''}
+  ${p.img&&p.img.length?`<details class="fl"><summary>See the flyer${p.img.length>1?' ('+p.img.length+' pages)':''}</summary>${p.img.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img loading="lazy" alt="${esc(p.name)} flyer" src="${esc(u)}"></a>`).join('')}</details>`:''}
+  ${p.pdf?`<p class="hint" style="margin:0 0 8px"><a href="${esc(p.pdf)}" target="_blank" rel="noopener">Open the PDF sheet</a></p>`:''}
   ${brands&&p.brands.length?`<div class="br"><div class="bh"><span>Dealers this fits</span><span>${f.length}</span></div>${f.slice(0,6).map(x=>`<div class="sp"><div>${esc(title(names[x.id].name))}<br><small>${esc(x.hit.join(', '))} down ${money(x.loss)}</small></div><a class="pbtn" href="tel:${esc(names[x.id].phone)}">Call</a></div>`).join('')||'<div class="nomatch">No dealers are down on these brands.</div>'}</div>`:''}
   </div>`};
  return`<div class="tools" style="display:block"><input type="search" id="sq" placeholder="Search a brand or program" value="${esc(view.sq)}"></div>
- <p class="hint">${live.length} live programs from the ${esc(specials.src)}, soonest ending first.${specials.src==='Specials Board'?'':' Full offer details show once the tracker is next to specials.html on GitHub.'}</p>
+ <p class="hint">${live.length} live programs from the ${esc(specials.src)}, soonest ending first.${specials.src==='Specials Board'?'':' Offer details and flyer pictures show once the tracker is next to specials.html on GitHub.'}</p>
  <div class="grid">${live.map(card).join('')}</div>`;
 }
 

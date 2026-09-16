@@ -1,0 +1,457 @@
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Territory Pace</title>
+<style>
+:root{--ink:#14213D;--paper:#F3F5F8;--line:#DDE2EA;--slate:#5E6778;--amber:#F0A202;--go:#2E8B57;--warn:#B87C08;--stop:#C43D2B}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.45 "Avenir Next","Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+.wrap{max-width:1100px;margin:0 auto}
+header{background:var(--ink);color:#fff;padding:18px 18px 20px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.top h1{font-size:17px;margin:0;font-weight:600}
+.top small{display:block;color:#AEB9CF;font-size:13px;font-weight:400}
+.btn{appearance:none;border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;background:var(--amber);color:var(--ink);white-space:nowrap}
+.btn.line{background:#fff;border:1px solid var(--line)}
+.btn.danger{background:#fff;color:var(--stop);border:1px solid #E7B8B0}
+button:focus-visible,select:focus-visible,input:focus-visible,label.btn:focus-within{outline:3px solid #6EA8FE;outline-offset:2px}
+.proj{margin-top:20px}
+.big{font-size:44px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.sub{color:#C9D2E3;margin-top:6px;font-size:14px}
+.strip{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin:16px 0 8px}
+.seg{height:22px;border-radius:2px;background:#2B3B63}
+.seg.on.go{background:#3FB67A}.seg.on.warn{background:var(--amber)}.seg.on.stop{background:#E4573F}
+.seg.goal{box-shadow:inset 0 -3px 0 #fff}
+.sl{display:flex;justify-content:space-between;font-size:13px;color:#C9D2E3}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+.stat{background:#fff;padding:12px 16px}
+.stat b{display:block;font-size:20px;line-height:1.2}
+.stat span{font-size:13px;color:var(--slate)}
+nav{display:flex;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav button{flex:1;border:0;background:none;padding:13px 4px;font:inherit;font-size:14px;color:var(--slate);border-bottom:3px solid transparent;cursor:pointer}
+nav button[aria-selected=true]{color:var(--ink);font-weight:600;border-bottom-color:var(--amber)}
+main{padding:12px 12px 48px}
+.tools{display:flex;gap:8px;align-items:center;margin:2px 2px 12px;font-size:14px;color:var(--slate)}
+select,input[type=number]{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.note{background:#FFF6DF;border:1px solid #F2D58A;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:14px}
+.note.err{background:#FBEAE7;border-color:#EBB4AA}
+.d{background:#fff;border:1px solid var(--line);border-left:5px solid var(--slate);border-radius:6px;margin-bottom:8px}
+.d.go{border-left-color:var(--go)}.d.warn{border-left-color:var(--warn)}.d.stop{border-left-color:var(--stop)}
+.d>button{display:block;width:100%;text-align:left;background:none;border:0;padding:12px 12px 10px;font:inherit;color:inherit;cursor:pointer;border-radius:6px}
+.r1,.r2{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.nm{font-weight:600}
+.amt{font-weight:700;white-space:nowrap}
+.r2{font-size:13px;color:var(--slate);margin-top:2px}
+.meter{height:6px;background:#E8ECF2;border-radius:3px;margin-top:9px;position:relative;overflow:hidden}
+.meter i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.meter i.go{background:var(--go)}.meter i.warn{background:var(--amber)}.meter i.stop{background:var(--stop)}
+.meter::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--ink)}
+.r3{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:7px;color:var(--slate)}
+.r3 em{font-style:normal;color:var(--ink);font-weight:600}
+.det{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:0 12px;padding:10px 0 12px;border-top:1px dashed var(--line);font-size:14px}
+.det span{display:block;font-size:12px;color:var(--slate)}
+.det a{color:var(--ink)}
+h2{font-size:16px;margin:18px 4px 4px}
+.hint{font-size:13px;color:var(--slate);margin:0 4px 10px}
+.item{background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.item small{display:block;color:var(--slate);font-size:13px}
+.item a{color:var(--ink);font-weight:600;white-space:nowrap}
+.chart{background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px}
+.set{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px}
+.set label.f{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0}
+.chk{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid #EEF1F5;font-size:14px}
+.chk input{width:20px;height:20px}
+.empty{text-align:center;padding:40px 16px;color:var(--slate)}
+.neg{color:var(--stop)}
+.grid{display:block}
+@media (min-width:820px){.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}.grid .d,.grid .tg{margin-bottom:0}.stats{grid-template-columns:repeat(3,1fr)}}
+nav button{font-size:13px}
+.tg{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px}
+.tg h3{margin:0;font-size:16px}
+.tg .sum{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--slate);margin:4px 0 8px}
+.tg .sum em{font-style:normal;font-weight:600;color:var(--ink)}
+.br{border-top:1px solid #EEF1F5;padding:8px 0 4px}
+.br .bh{display:flex;justify-content:space-between;font-weight:600;font-size:14px}
+.br .bh .neg{font-weight:700}
+.sp{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:4px 0}
+.sp small{color:var(--slate)}
+.sp .soon{color:var(--stop);font-weight:600}
+.pbtn{font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;white-space:nowrap;color:var(--ink)}
+.pbtn.done{background:#E7F3EC;border-color:#B9DCC7;color:var(--go)}
+.nomatch{font-size:13px;color:var(--slate);padding:2px 0 4px}
+.up{color:var(--go)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<div class="wrap" id="app"></div>
+<input type="file" id="file" accept=".csv,text/csv" hidden>
+<input type="file" id="bfile" accept=".txt,text/plain" hidden>
+<script>
+const SEED=``;
+
+//LOGIC-START
+const HOL={};
+const D=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(Date.UTC(a,b-1,c))};
+const iso=d=>d.toISOString().slice(0,10);
+function obs(y,m,d){const t=new Date(Date.UTC(y,m,d)),w=t.getUTCDay();if(w===6)t.setUTCDate(d-1);if(w===0)t.setUTCDate(d+1);return iso(t)}
+function nth(y,m,dow,n){const f=new Date(Date.UTC(y,m,1)).getUTCDay();return iso(new Date(Date.UTC(y,m,1+((dow-f+7)%7)+(n-1)*7)))}
+function lastDow(y,m,dow){const L=new Date(Date.UTC(y,m+1,0));return iso(new Date(Date.UTC(y,m,L.getUTCDate()-((L.getUTCDay()-dow+7)%7))))}
+function holidays(y){if(!HOL[y])HOL[y]=new Set([obs(y,0,1),lastDow(y,4,1),obs(y,6,4),nth(y,8,1,1),nth(y,10,4,4),obs(y,11,25)]);return HOL[y]}
+function sellingDays(a,b){let n=0;for(let t=D(a).getTime(),e=D(b).getTime();t<=e;t+=864e5){const d=new Date(t),w=d.getUTCDay();if(w>0&&w<6&&!holidays(d.getUTCFullYear()).has(iso(d)))n++}return n}
+
+function parseCSV(t){const rows=[];let row=[],f='',q=false;
+ for(let i=0;i<t.length;i++){const c=t[i];
+  if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+  else if(c==='"')q=true;
+  else if(c===','){row.push(f);f=''}
+  else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x.trim()))rows.push(row);row=[]}
+  else f+=c}
+ row.push(f);if(row.some(x=>x.trim()))rows.push(row);return rows}
+
+function toSnapshot(text){
+ const rows=parseCSV(text.replace(/^\uFEFF/,''));
+ if(rows.length<2)throw new Error('That file has no dealer rows.');
+ const h=rows[0].map(x=>x.trim().toLowerCase());
+ for(const n of['dealer#','name','last order','mtd$','ytd$','prior 12'])
+  if(h.indexOf(n)<0)throw new Error('This file is missing the "'+n+'" column. Use the Excel button on the WPS Dealers page.');
+ const g=(r,n)=>{const i=h.indexOf(n);return i<0?'':String(r[i]||'').trim()};
+ const num=s=>{const v=parseFloat(String(s).replace(/[$,\s]/g,''));return isFinite(v)?v:0};
+ const dt=s=>{const m=s.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);return m?`${m[1]}-${m[2]}-${m[3]}`:null};
+ const dealers=rows.slice(1).filter(r=>g(r,'dealer#')).map(r=>({
+  id:g(r,'dealer#'),name:g(r,'name').replace(/\s+/g,' '),city:g(r,'city'),tc:g(r,'tc level'),phone:g(r,'phone#'),
+  lo:dt(g(r,'last order')),bal:num(g(r,'balance$')),mcr:num(g(r,'mtd cr/rtn$')),
+  mtd:num(g(r,'mtd$'))+num(g(r,'mtd cr/rtn$')),ytd:num(g(r,'ytd$'))+num(g(r,'ytd cr/rtn$')),p12:num(g(r,'prior 12'))}));
+ const asOf=dealers.map(d=>d.lo).filter(Boolean).sort().pop();
+ if(!asOf)throw new Error('Could not find any order dates in this file.');
+ return{asOf,dealers};
+}
+
+function compute(index,snaps,settings){
+ const asOf=index[index.length-1],s=snaps[asOf],ym=asOf.slice(0,7),y=+asOf.slice(0,4),m=+asOf.slice(5,7);
+ const el=Math.max(1,sellingDays(ym+'-01',asOf)),tot=Math.max(el,sellingDays(ym+'-01',iso(new Date(Date.UTC(y,m,0)))));
+ const prevDate=index.filter(d=>d<asOf).pop()||null,prev=prevDate?snaps[prevDate]:null;
+ const same=prev&&prevDate.slice(0,7)===ym;
+ const pm={};if(prev)prev.dealers.forEach(d=>pm[d.id]=d);
+ const p12Days=sellingDays(iso(new Date(D(asOf).getTime()-364*864e5)),asOf);
+ const yEl=sellingDays(y+'-01-01',asOf),yTot=sellingDays(y+'-01-01',y+'-12-31');
+ const goal=settings.goal,ex=new Set(settings.exclude);
+ const list=s.dealers.filter(d=>!ex.has(d.id)).map(d=>{
+  const avg=d.mtd/el,base=d.p12/p12Days;
+  const day=prev?(same?d.mtd-(pm[d.id]?pm[d.id].mtd:0):d.mtd):null;
+  return{...d,avg,pct:goal?avg/goal:0,base,norm:base>0?avg/base:null,gap:base*el-d.mtd,day,
+   idle:d.lo?Math.round((D(asOf)-D(d.lo))/864e5):null,trend:d.p12>0?(d.ytd/yEl*yTot)/d.p12:null};
+ });
+ const n=list.length,sum=k=>list.reduce((a,d)=>a+(d[k]||0),0);
+ const mtd=sum('mtd'),goalMonth=goal*n*tot,remain=tot-el;
+ const ytd=sum('ytd'),p12=sum('p12');
+ return{asOf,prevDate,el,tot,n,list,mtd,goalMonth,remain,
+  proj:mtd/el*tot,avgPer:n?mtd/(n*el):0,need:remain>0?(goalMonth-mtd)/remain:0,
+  ordered:list.filter(d=>d.lo===asOf).length,daySum:prev?sum('day'):null,
+  trend:p12>0?(ytd/yEl*yTot)/p12:null};
+}
+//LOGIC-END
+
+const K={set:'dst:settings',idx:'dst:index',snap:d=>'dst:snap:'+d,brands:'dst:brands',pitch:'dst:pitches'};
+let brands=null,pitches=[],specials={list:[],src:''};
+let settings={goal:500,idle:14,exclude:['1213','2260312']};
+let index=[];const snaps={};
+let view={tab:'dealers',sort:'mtd',open:null,note:null,tsort:'behind'};
+// Saving: uses the phone's browser storage when hosted (GitHub Pages).
+// Falls back to memory only if saving is blocked, without throwing errors.
+let store='memory';const mem={};
+async function pickStore(){
+ try{if(window.storage){const r=await window.storage.set('dst:test','1',false);if(r){store='claude';return}}}catch(e){}
+ try{const ls=window['local'+'Storage'];ls.setItem('dst:test','1');ls.removeItem('dst:test');store='browser';return}catch(e){}
+ store='memory';
+}
+const canSave=()=>store!=='memory';
+const LS=()=>window['local'+'Storage'];
+async function sget(k){try{
+ if(store==='claude'){const r=await window.storage.get(k,false);return r?JSON.parse(r.value):null}
+ if(store==='browser'){const v=LS().getItem(k);return v?JSON.parse(v):null}
+ return mem[k]?JSON.parse(mem[k]):null}catch(e){return null}}
+async function sset(k,v){try{const s=JSON.stringify(v);
+ if(store==='claude')return!!(await window.storage.set(k,s,false));
+ if(store==='browser'){LS().setItem(k,s);return true}
+ mem[k]=s;return false}catch(e){return false}}
+async function sdel(k){try{
+ if(store==='claude')await window.storage.delete(k,false);
+ else if(store==='browser')LS().removeItem(k);
+ else delete mem[k]}catch(e){}}
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=v=>(v<0?'-$':'$')+Math.round(Math.abs(v)).toLocaleString('en-US');
+const pctTxt=v=>v==null?'n/a':Math.round(v*100)+'%';
+const cls=p=>p>=1?'go':p>=.7?'warn':'stop';
+const title=s=>s.toLowerCase().replace(/\b([a-z])/g,c=>c.toUpperCase()).replace(/'S\b/g,"'s");
+const fmtDate=(s,wd)=>D(s).toLocaleDateString('en-US',{weekday:wd?'short':undefined,month:'short',day:'numeric',timeZone:'UTC'});
+const monthName=s=>D(s).toLocaleDateString('en-US',{month:'long',timeZone:'UTC'});
+
+async function saveSnap(s){
+ snaps[s.asOf]=s;if(!index.includes(s.asOf)){index.push(s.asOf);index.sort()}
+ const ok=await sset(K.snap(s.asOf),s);await sset(K.idx,index);return ok;
+}
+
+
+const FALLBACK=[
+["Bridgestone buy 5, get 1 free","2026-09-30",["Bridgestone"]],
+["System 3 extra 5% on tires and SB8 wheels","2026-09-30",["System 3"]],
+["Shinko Peak 017 display kit","2026-09-30",["Shinko"]],
+["2026 tire buy-in lock","2026-12-31",["Dunlop","Michelin","Shinko","Bridgestone","BFGoodrich","Sedona","Maxxis","IRC","GBC","ITP","Carlisle","Raceline","System 3"]],
+["Tire quarterly rebate","2026-12-31",["Dunlop","Michelin","Shinko","Bridgestone","BFGoodrich","Sedona","Maxxis","IRC"]],
+["Mix & Match special","2026-09-30",["Highway 21","GMax","RST","Scorpion EXO","Scott","DBK","POD","Sena","Cardo","Exocom","UClear"]],
+["USWE buy-in levels","2026-10-31",["USWE"]],
+["100% free goggles and gloves","2026-09-30",["100%"]],
+["100% apparel pre-order","2026-10-31",["100%"]],
+["RST 15% off boots, jackets, gloves, pants","2026-09-30",["RST"]],
+["Scorpion EXO 15% off Ryzer, Optima II, Tempest","2026-09-30",["Scorpion EXO"]],
+["Rheon 10% off Level 1 protectors","2026-09-30",["Rheon"]],
+["Fly Racing MX27 pre-book","2026-10-31",["Fly Racing","POD","DBK"]],
+["Fly Mesh launch","",["Fly Racing"]],
+["Cardo Venture and Beyond pre-book","",["Cardo"]],
+["2026 helmet and apparel program","2026-12-31",["Fly Racing","GMax","RST","Scorpion EXO","Scott","Baffin","EVS","100%","Gaerne","Cardo","Exocom","UClear","DBK","POD","Sena","Highway 21"]],
+["Helmet and apparel bundle kicker","2026-12-31",["Fly Racing","GMax","Scorpion EXO","RST","DBK","100%","EVS","POD","Cardo"]],
+["Alpinestars levels","2026-12-31",["Alpinestars"]],
+["All Balls spend $750, take a display","2026-10-31",["All Balls"]],
+["HardDrive 8% off touring shocks","2026-09-30",["HardDrive"]],
+["Santoro Fabworx 12% off","2026-09-30",["Santoro Fabworx"]],
+["FLO Motorsports 8% off","2026-09-30",["FLO Motorsports"]],
+["Fox 8% off Indian shocks","2026-09-30",["Fox"]],
+["Fire Power jug and hose program","",["Fire Power"]],
+["Fire Power bundle and save","2026-09-18",["Fire Power"]],
+["Seizmik 20% off","",["Seizmik"]],
+["RFX free display","",["RFX"]],
+["Bel-Ray 55 gallon drums","2026-09-30",["Bel-Ray"]],
+["Klotz buy 7 gallons get 1, buy 8 bottles get 2","2026-09-30",["Klotz"]],
+["Red Line spend $1,500, free display","2026-09-30",["Red Line"]],
+["2027 snow hard parts pre-book","2026-10-31",["Camso","Woodys","Stud Boy","SP1","Klotz","Maxima","Vertex","All Balls","NGK","Garland","Caliber","Dayco","Ultimax"]],
+["SMX26 dealer VIP tickets","",["Fly Racing","GMax","Fire Power","HardDrive","Highway 21","Open Trail","Sedona","Shinko","Scorpion EXO","All Balls","Cylinder Works","Hot Cams","Hot Rods","Pivot Works","Vertex","UClear","POD","RFX","RST","SP1"]]
+].map(([name,ends,b])=>({name,ends,brands:b}));
+
+const todayIso=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')};
+const bn=s=>{const x=String(s).toUpperCase().replace(/[^A-Z0-9]/g,'');return x==='100'?'100PERCENT':x};
+const daysLeft=e=>e?Math.round((D(e)-D(todayIso()))/864e5):null;
+
+async function loadSpecials(){
+ try{
+  const r=await fetch('specials.html',{cache:'no-cache'});if(!r.ok)throw 0;
+  const m=(await r.text()).match(/const PROGRAMS\s*=\s*(\[[\s\S]*?\n\]);/);if(!m)throw 0;
+  const arr=Function('"use strict";return '+m[1])();
+  specials={list:arr.map(p=>({name:p.name,ends:p.ends||'',brands:p.brands||[]})),src:'Specials Board'};
+ }catch(e){specials={list:FALLBACK,src:'built-in September list'}}
+}
+function matchSpecials(brand){
+ const k=bn(brand),t=todayIso();
+ return specials.list.filter(p=>(!p.ends||p.ends>=t)&&p.brands.some(b=>bn(b)===k))
+  .sort((a,b)=>(daysLeft(a.ends)??9999)-(daysLeft(b.ends)??9999));
+}
+function parseBrandFile(text){
+ const dealers={};let cur=null,asOf=null;
+ text.split(/\r?\n/).forEach(l=>{l=l.trim();if(!l)return;
+  if(l[0]==='@'){asOf=l.split('|')[1]||null;return}
+  const p=l.replace(/^#/,'').split('|');
+  if(l[0]==='#'){cur=p[0];dealers[cur]={name:p[1],y26:+p[2]||0,y25:+p[3]||0,b:[]};}
+  else if(p.length===4&&dealers[p[0]])dealers[p[0]].b.push([p[1],+p[2]||0,+p[3]||0]);
+ });
+ if(!Object.keys(dealers).length)throw new Error('That file has no brand data. Use the brand-data file from Claude.');
+ return{asOf,dealers};
+}
+const BT={'100-PERCENT':'100%','HARDDRIVE':'HardDrive','BFGOODRICH':'BFGoodrich','UCLEAR':'UClear','GMAX':'GMax','XTC POWER PRODUCTS':'XTC Power Products','D.I.D':'D.I.D','K&N':'K&N','K&L':'K&L','C&A':'C&A'};
+const brandTitle=s=>BT[s]||(s.length<=4&&!/ /.test(s)?s:title(s));
+function dealerBrands(id){
+ const bd=brands&&brands.dealers[id];if(!bd)return null;
+ const rows=bd.b.map(([n,a,c])=>({n,a,c,diff:a-c}));
+ return{...bd,down:rows.filter(r=>r.diff<=-500).sort((x,y)=>x.diff-y.diff),up:rows.filter(r=>r.diff>=500).sort((x,y)=>y.diff-x.diff),chg:bd.y26-bd.y25};
+}
+
+async function init(){
+ await pickStore();
+ const st=await sget(K.set);
+ if(st)settings={...settings,...st};
+ index=(await sget(K.idx))||[];
+ if(index.length){
+  const ym=index[index.length-1].slice(0,7);
+  const before=index.filter(d=>d.slice(0,7)<ym).pop();
+  for(const d of index.filter(d=>d.slice(0,7)===ym||d===before)){const v=await sget(K.snap(d));if(v)snaps[d]=v}
+  index=index.filter(d=>snaps[d]||d<(before||''));
+ }
+ if(SEED.trim()&&!st&&!Object.keys(snaps).length){await saveSnap(toSnapshot(SEED));await sset(K.set,settings)}
+ brands=await sget(K.brands);pitches=(await sget(K.pitch))||[];await loadSpecials();
+ if(!canSave())view.note={t:"Saving is blocked in this preview, so uploads last only until you close it. Open the GitHub Pages version to keep your history."};
+ render();
+}
+
+function loaded(){return index.filter(d=>snaps[d])}
+
+function render(){
+ const app=document.getElementById('app'),idx=loaded();
+ const note=view.note?`<div class="note ${view.note.err?'err':''}" role="status">${esc(view.note.t)}</div>`:'';
+ if(!idx.length){
+  app.innerHTML=`<header><div class="top"><h1>Territory pace</h1><button class="btn" data-act="upload">Upload dealer file</button></div></header>
+  <main>${note}<div class="empty">Open the Dealers page in the WPS sales portal, tap Excel, then upload that file here.</div></main>`;return;
+ }
+ const t=compute(idx,snaps,settings);
+ const p=t.goalMonth?t.proj/t.goalMonth:0,lit=Math.round(Math.min(p,1)*24);
+ const segs=Array.from({length:24},(_,i)=>`<div class="seg ${i<lit?'on '+cls(p):''} ${i===23?'goal':''}"></div>`).join('');
+ const needTxt=t.remain<=0?['Month complete','No selling days left']:t.need<=0?['Goal reached','Anything more is extra']:[money(t.need),`Needed per day to reach goal (${money(t.need/t.n)} per dealer)`];
+ app.innerHTML=`
+ <header>
+  <div class="top"><h1>Territory pace<small>Sales through ${fmtDate(t.asOf,true)}</small></h1>
+  <button class="btn" data-act="upload">Upload today's file</button></div>
+  <div class="proj"><div class="big">${money(t.proj)}</div>
+   <div class="sub">Projected for ${monthName(t.asOf)} at the current pace</div>
+   <div class="strip" role="img" aria-label="${pctTxt(p)} of monthly goal">${segs}</div>
+   <div class="sl"><span>${pctTxt(p)} of goal</span><span>Goal ${money(t.goalMonth)}</span></div></div>
+ </header>
+ <div class="stats">
+  <div class="stat"><b>${money(t.mtd)}</b><span>Month to date, selling day ${t.el} of ${t.tot}</span></div>
+  <div class="stat"><b>${money(t.avgPer)}</b><span>Per dealer per day (goal ${money(settings.goal)})</span></div>
+  <div class="stat"><b>${needTxt[0]}</b><span>${needTxt[1]}</span></div>
+  <div class="stat"><b>${t.daySum==null?t.ordered+' of '+t.n:money(t.daySum)}</b><span>${t.daySum==null?'Dealers ordered on '+fmtDate(t.asOf):'Sales since the '+fmtDate(t.prevDate)+' file ('+t.ordered+' dealers ordered)'}</span></div>
+  ${(()=>{if(!brands)return`<div class="stat"><b>No brand data</b><span>Import it in Settings to see year over year</span></div>`;
+   const ex=new Set(settings.exclude);let a=0,c=0;Object.entries(brands.dealers).forEach(([id,d])=>{if(!ex.has(id)){a+=d.y26;c+=d.y25}});
+   return`<div class="stat"><b class="${a<c?'neg':'up'}">${a>=c?'+':''}${money(a-c)}</b><span>Year to date vs. last year (${c?pctTxt(a/c):'n/a'}), brand data ${brands.asOf?fmtDate(brands.asOf):''}</span></div>`})()}
+  <div class="stat"><b>${t.list.filter(d=>d.idle==null||d.idle>=settings.idle).length}</b><span>Dealers with no order in ${settings.idle}+ days</span></div>
+ </div>
+ <nav role="tablist">${[['dealers','Dealers'],['targets','Targets'],['calls','Call list'],['daily','Daily'],['settings','Settings']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${view.tab===k}">${l}</button>`).join('')}</nav>
+ <main>${note}${view.tab==='dealers'?dealersTab(t):view.tab==='targets'?targetsTab(t):view.tab==='calls'?callsTab(t):view.tab==='daily'?dailyTab(t,idx):settingsTab(t)}</main>`;
+}
+
+function dealersTab(t){
+ const S={mtd:(a,b)=>b.mtd-a.mtd,goal:(a,b)=>a.pct-b.pct,norm:(a,b)=>(a.norm??9)-(b.norm??9),day:(a,b)=>(b.day||0)-(a.day||0),idle:(a,b)=>(b.idle??9999)-(a.idle??9999),name:(a,b)=>a.name.localeCompare(b.name)};
+ const opts=[['mtd','Most sales this month'],['goal','Furthest behind goal'],['norm','Furthest below their normal'],['day','Most sales since last file'],['idle','Longest since last order'],['name','Name A to Z']];
+ const rows=[...t.list].sort(S[view.sort]||S.mtd).map(d=>{
+  const open=view.open===d.id,c=cls(d.pct);
+  return`<div class="d ${c}"><button data-open="${esc(d.id)}" aria-expanded="${open}">
+   <div class="r1"><span class="nm">${esc(title(d.name))}</span><span class="amt">${money(d.mtd)}</span></div>
+   <div class="r2"><span>${esc(title(d.city))}${d.tc?', '+esc(d.tc):''}</span><span>${money(d.avg)} per day</span></div>
+   <div class="meter" aria-hidden="true"><i class="${c}" style="width:${Math.min(d.pct,2)/2*100}%"></i></div>
+   <div class="r3"><span><em>${pctTxt(d.pct)}</em> of goal</span><span><em>${pctTxt(d.norm)}</em> of their normal</span><span>${d.idle==null?'No orders on file':d.idle===0?'Ordered on '+fmtDate(t.asOf):'Last order <em>'+d.idle+'</em> days ago'}</span></div>
+  </button>${open?`<div class="det">
+   <div><span>Since last file</span>${d.day==null?'Upload tomorrow':money(d.day)}</div>
+   <div><span>Normal pace</span>${money(d.base)} per day</div>
+   <div><span>Credits this month</span><b class="${d.mcr<0?'neg':''}">${money(d.mcr)}</b></div>
+   <div><span>Open balance</span>${money(d.bal)}</div>
+   <div><span>Year to date</span>${money(d.ytd)}</div>
+   <div><span>Last 12 months</span>${money(d.p12)}</div>
+   ${(()=>{const b=dealerBrands(d.id);if(!b)return'';return`<div><span>YTD vs. last year</span><b class="${b.chg<0?'neg':'up'}">${b.chg>=0?'+':''}${money(b.chg)}</b></div>
+   <div style="grid-column:1/-1"><span>Biggest brand drops</span>${b.down.slice(0,3).map(r=>esc(brandTitle(r.n))+' '+money(r.diff)).join(', ')||'None over $500'}</div>
+   <div style="grid-column:1/-1"><span>Biggest brand gains</span>${b.up.slice(0,3).map(r=>esc(brandTitle(r.n))+' +'+money(r.diff)).join(', ')||'None over $500'}</div>`})()}
+   <div><span>Phone</span><a href="tel:${esc(d.phone)}">${esc(d.phone)}</a></div>
+  </div>`:''}</div>`}).join('');
+ return`<div class="tools"><label for="sort">Sort</label><select id="sort">${opts.map(([k,l])=>`<option value="${k}" ${view.sort===k?'selected':''}>${l}</option>`).join('')}</select></div>
+ <p class="hint">The bar's center line is the ${money(settings.goal)} daily goal. "Normal" compares this month to each dealer's own last 12 months.</p><div class="grid">${rows}</div>`;
+}
+
+
+function targetsTab(t){
+ if(!brands)return`<div class="empty">Import your brand data file in Settings to build the target list.</div>`;
+ const opts=[['behind','Furthest behind this month'],['ytd','Biggest drop vs. last year'],['name','Name A to Z']];
+ const items=t.list.map(d=>({d,b:dealerBrands(d.id)})).filter(x=>x.b);
+ const S={behind:(x,y)=>Math.max(0,y.d.gap)-Math.max(0,x.d.gap)||x.b.chg-y.b.chg,ytd:(x,y)=>x.b.chg-y.b.chg,name:(x,y)=>x.d.name.localeCompare(y.d.name)};
+ items.sort(S[view.tsort]||S.behind);
+ const ym=t.asOf.slice(0,7);
+ const card=({d,b})=>{
+  const brandsHtml=b.down.slice(0,4).map(r=>{
+   const m=matchSpecials(r.n).slice(0,3);
+   const sps=m.length?m.map(p=>{
+    const dl=daysLeft(p.ends),key=d.id+'|'+r.n+'|'+p.name;
+    const pt=pitches.filter(x=>x.key===key).pop();
+    const since=pt?(pt.ym===ym?money(d.mtd-pt.mtd):'new month'):'';
+    return`<div class="sp"><div>${esc(p.name)}<br><small class="${dl!=null&&dl<=7?'soon':''}">${dl==null?'Ongoing':dl===0?'Ends today':dl+' days left'}</small></div>
+     ${pt?`<button class="pbtn done" data-unpitch="${esc(key)}">Pitched ${fmtDate(pt.date)}, ${since} since</button>`:`<button class="pbtn" data-pitch="${esc(key)}">Pitched</button>`}</div>`}).join('')
+    :`<div class="nomatch">No live special. Stocking conversation.</div>`;
+   return`<div class="br"><div class="bh"><span>${esc(brandTitle(r.n))}</span><span class="neg">${money(r.diff)}</span></div><div class="nomatch" style="padding:0">${money(r.a)} this year vs. ${money(r.c)} last year</div>${sps}</div>`;
+  }).join('')||`<div class="nomatch">No brand is down more than $500. Look at growth brands to build on.</div>`;
+  return`<div class="tg"><h3>${esc(title(d.name))}</h3>
+   <div class="sum"><span>This month <em>${d.gap>0?money(d.gap)+' behind normal':'on or ahead of normal'}</em></span><span>YTD <em class="${b.chg<0?'neg':'up'}">${b.chg>=0?'+':''}${money(b.chg)}</em></span>${d.idle!=null&&d.idle>=settings.idle?`<span><em class="neg">${d.idle} days since last order</em></span>`:''}<span><a href="tel:${esc(d.phone)}">Call</a></span></div>
+   ${brandsHtml}</div>`;
+ };
+ return`<div class="tools"><label for="tsort">Sort</label><select id="tsort">${opts.map(([k,l])=>`<option value="${k}" ${view.tsort===k?'selected':''}>${l}</option>`).join('')}</select></div>
+ <p class="hint">Each dealer's biggest brand drops with the live specials that fit, soonest ending first. Tap Pitched when you offer one, and the card tracks their sales since. Specials from the ${esc(specials.src)}.</p>
+ <div class="grid">${items.map(card).join('')}</div>`;
+}
+
+function callsTab(t){
+ const item=(d,sub)=>`<div class="item"><div><b>${esc(title(d.name))}</b><small>${sub}</small></div><a href="tel:${esc(d.phone)}">Call</a></div>`;
+ const idle=t.list.filter(d=>d.idle==null||d.idle>=settings.idle).sort((a,b)=>(b.idle??9999)-(a.idle??9999));
+ const behind=t.list.filter(d=>d.base>0&&d.norm<.6&&!(d.idle==null||d.idle>=settings.idle)&&d.gap>250).sort((a,b)=>b.gap-a.gap);
+ return`<h2>No order in ${settings.idle}+ days</h2><p class="hint">Sorted by longest wait.</p>
+ ${idle.length?idle.map(d=>item(d,d.idle==null?'No orders on file':`Last order ${fmtDate(d.lo)}, ${d.idle} days ago. ${money(d.p12)} last 12 months`)).join(''):'<p class="hint">Every dealer has ordered recently.</p>'}
+ <h2>Buying, but well below their normal</h2><p class="hint">Under 60% of their usual pace, sorted by dollars behind.</p>
+ ${behind.length?behind.map(d=>item(d,`${money(d.gap)} behind normal. ${pctTxt(d.norm)} of usual pace`)).join(''):'<p class="hint">No active dealers are far below normal.</p>'}`;
+}
+
+function dailyTab(t,idx){
+ const ym=t.asOf.slice(0,7),ex=new Set(settings.exclude);
+ const tot=s=>s.dealers.filter(d=>!ex.has(d.id)).reduce((a,d)=>a+d.mtd,0);
+ const all=idx;const days=[];
+ all.forEach((d,i)=>{if(d.slice(0,7)!==ym)return;const pd=all[i-1];
+  const v=tot(snaps[d]);let sales=null;
+  if(pd&&pd.slice(0,7)===ym)sales=v-tot(snaps[pd]);else if(pd)sales=v;
+  days.push({d,v,sales,ordered:snaps[d].dealers.filter(x=>!ex.has(x.id)&&x.lo===d).length})});
+ const withSales=days.filter(x=>x.sales!=null);
+ let chart='';
+ if(withSales.length){
+  const goalDay=settings.goal*t.n,max=Math.max(goalDay,...withSales.map(x=>x.sales))*1.1,W=340,H=150,bw=W/Math.max(withSales.length,8);
+  const gy=H-goalDay/max*H;
+  chart=`<div class="chart"><svg viewBox="0 0 ${W} ${H+18}" width="100%" role="img" aria-label="Daily sales compared with daily goal">
+  ${withSales.map((x,i)=>{const h=Math.max(1,Math.max(0,x.sales)/max*H);return`<rect x="${i*bw+2}" y="${H-h}" width="${bw-4}" height="${h}" rx="2" fill="${x.sales>=goalDay?'#2E8B57':'#14213D'}"/><text x="${i*bw+bw/2}" y="${H+14}" font-size="10" text-anchor="middle" fill="#5E6778">${+x.d.slice(8)}</text>`}).join('')}
+  <line x1="0" x2="${W}" y1="${gy}" y2="${gy}" stroke="#F0A202" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="${W-2}" y="${gy-4}" font-size="10" text-anchor="end" fill="#8A6205">Daily goal ${money(goalDay)}</text></svg></div>`;
+ }
+ return`<h2>${monthName(t.asOf)} by day</h2>
+ ${chart||`<p class="hint">Daily sales appear once you upload a second day's file. Each upload is compared with the one before it.</p>`}
+ <h2>Files uploaded</h2>
+ ${[...days].reverse().map(x=>`<div class="item"><div><b>${fmtDate(x.d,true)}</b><small>${x.ordered} dealers ordered. ${money(x.v)} month to date</small></div><b>${x.sales==null?'Starting point':money(x.sales)}</b></div>`).join('')}`;
+}
+
+function settingsTab(t){
+ const latest=snaps[t.asOf].dealers.slice().sort((a,b)=>a.name.localeCompare(b.name));
+ return`<div class="set">
+  <label class="f">Goal per dealer, per selling day<input type="number" id="goal" min="0" step="25" value="${settings.goal}" style="width:110px"></label>
+  <label class="f">Call list after this many days without an order<input type="number" id="idle" min="1" step="1" value="${settings.idle}" style="width:110px"></label>
+  <p class="hint" style="margin:8px 0 0">Selling days skip weekends and New Year's, Memorial Day, July 4, Labor Day, Thanksgiving and Christmas.</p>
+ </div>
+
+ <h2>Brand data</h2>
+ <div class="set"><p class="hint" style="margin:0 0 10px">${brands?`Loaded: ${Object.keys(brands.dealers).length} dealers${brands.asOf?', pulled '+fmtDate(brands.asOf):''}.`:'Not loaded yet.'} Refresh monthly with a new file from Claude.</p>
+ <button class="btn line" data-act="brandfile">Import brand data file</button></div>
+ <h2>Dealers counted toward the goal</h2><p class="hint">${t.n} counted. Uncheck sample or inactive accounts.</p>
+ <div class="set">${latest.map(d=>`<label class="chk"><input type="checkbox" data-inc="${esc(d.id)}" ${settings.exclude.includes(d.id)?'':'checked'}><span>${esc(title(d.name))} <small style="color:#5E6778">#${esc(d.id)}</small></span></label>`).join('')}</div>
+ <h2>Saved days</h2>
+ <div class="set">${loaded().slice().reverse().map(d=>`<div class="chk" style="justify-content:space-between"><span>${fmtDate(d,true)}</span><button class="btn line" data-del="${d}">Remove</button></div>`).join('')}</div>
+ <button class="btn danger" data-act="erase">Erase all saved data</button>`;
+}
+
+document.addEventListener('click',async e=>{
+ const b=e.target.closest('[data-tab],[data-open],[data-act],[data-del],[data-pitch],[data-unpitch]');if(!b)return;
+ if(b.dataset.tab){view.tab=b.dataset.tab;view.note=null;render();return}
+ if(b.dataset.open){view.open=view.open===b.dataset.open?null:b.dataset.open;render();return}
+ if(b.dataset.del){const d=b.dataset.del;if(!confirm('Remove the '+fmtDate(d)+' file?'))return;
+  index=index.filter(x=>x!==d);delete snaps[d];await sdel(K.snap(d));await sset(K.idx,index);view.note={t:'Removed '+fmtDate(d)+'.'};render();return}
+ if(b.dataset.act==='upload')document.getElementById('file').click();
+ if(b.dataset.act==='brandfile')document.getElementById('bfile').click();
+ if(b.dataset.pitch){const [id]=b.dataset.pitch.split('|');const t=compute(loaded(),snaps,settings);const d=t.list.find(x=>x.id===id);
+  pitches.push({key:b.dataset.pitch,date:todayIso(),ym:t.asOf.slice(0,7),mtd:d?d.mtd:0});await sset(K.pitch,pitches);render();return}
+ if(b.dataset.unpitch){if(!confirm('Clear this pitch?'))return;pitches=pitches.filter(x=>x.key!==b.dataset.unpitch);await sset(K.pitch,pitches);render();return}
+ if(b.dataset.act==='erase'){if(!confirm('Erase every saved day? This cannot be undone.'))return;
+  for(const d of index)await sdel(K.snap(d));index=[];for(const k in snaps)delete snaps[k];await sset(K.idx,[]);await sdel(K.pitch);pitches=[];await sset(K.set,settings);view.note={t:'All saved days erased.'};render()}
+});
+document.addEventListener('change',async e=>{
+ const el=e.target;
+ if(el.id==='sort'){view.sort=el.value;render();return}
+ if(el.id==='tsort'){view.tsort=el.value;render();return}
+ if(el.id==='bfile'&&el.files[0]){try{brands=parseBrandFile(await el.files[0].text());const ok=await sset(K.brands,brands);view.tab='targets';view.note={t:`Brand data loaded for ${Object.keys(brands.dealers).length} dealers.${ok||!canSave()?'':' It could not be saved, so it will be gone next time.'}`}}catch(err){view.note={t:err.message,err:true}}el.value='';render();return}
+ if(el.id==='goal'||el.id==='idle'){const v=parseFloat(el.value);if(isFinite(v)&&v>=(el.id==='idle'?1:0)){settings[el.id]=v;await sset(K.set,settings);render()}return}
+ if(el.dataset.inc){const id=el.dataset.inc;settings.exclude=el.checked?settings.exclude.filter(x=>x!==id):[...settings.exclude,id];await sset(K.set,settings);render();return}
+ if(el.id==='file'&&el.files[0]){
+  try{
+   const s=toSnapshot(await el.files[0].text());const had=!!snaps[s.asOf];
+   const ok=await saveSnap(s);view.tab='dealers';
+   const t=compute(loaded(),snaps,settings);
+   view.note={t:`${had?'Replaced':'Added'} sales through ${fmtDate(s.asOf,true)}. ${t.ordered} dealers ordered${t.asOf===s.asOf&&t.daySum!=null?', '+money(t.daySum)+' since the last file':''}.${ok||!canSave()?'':' This day could not be saved, so it will be gone next time.'}`};
+  }catch(err){view.note={t:err.message,err:true}}
+  el.value='';render();
+ }
+});
+init();
+</script>

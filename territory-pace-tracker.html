@@ -67,6 +67,15 @@ h2{font-size:16px;margin:18px 4px 4px}
 nav button{font-size:13px;padding:13px 2px}
 textarea,input[type=date],input[type=search]{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%}
 .note{white-space:pre-wrap}
+.bt{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
+.bt th{text-align:left;font-size:12px;color:var(--slate);font-weight:600;padding:8px;border-bottom:2px solid var(--line);white-space:nowrap}
+.bt td{padding:8px;border-bottom:1px solid #EEF1F5;vertical-align:top}
+.bt td.n{text-align:right;white-space:nowrap}
+.bt .prog{font-size:12px;color:var(--slate);margin-top:3px}
+.bt .prog b{color:var(--ink);font-weight:600}
+.tick{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--line)}
+.tick.on{background:#2A6FDB}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
 details.fl{margin:6px 0 8px}
 details.fl summary{cursor:pointer;font-weight:600;font-size:14px;padding:6px 0;color:var(--ink)}
 details.fl img{width:100%;display:block;margin-top:8px;border:1px solid var(--line);border-radius:6px}
@@ -194,7 +203,7 @@ const K={set:'dst:settings',idx:'dst:index',snap:d=>'dst:snap:'+d,brands:'dst:br
 let brands=null,pitches=[],notes={},specials={list:[],src:''};
 let settings={goal:500,idle:14,exclude:['1213','2260312']};
 let index=[];const snaps={};
-let view={tab:'dealers',sort:'mtd',open:null,note:null,tsort:'behind',sq:'',nd:''};
+let view={tab:'dealers',sort:'mtd',open:null,note:null,tsort:'behind',sq:'',nd:'',bd:'',bsort:'change'};
 // Saving: uses the phone's browser storage when hosted (GitHub Pages).
 // Falls back to memory only if saving is blocked, without throwing errors.
 let store='memory';const mem={};
@@ -382,8 +391,8 @@ function render(){
    return`<div class="stat"><b class="${a<c?'neg':'up'}">${a>=c?'+':''}${money(a-c)}</b><span>Year to date vs. last year (${c?pctTxt(a/c):'n/a'}), brand data ${brands.asOf?fmtDate(brands.asOf):''}</span></div>`})()}
   <div class="stat"><b>${t.list.filter(d=>d.idle==null||d.idle>=settings.idle).length}</b><span>Dealers with no order in ${settings.idle}+ days</span></div>
  </div>
- <nav role="tablist">${[['dealers','Dealers'],['targets','Targets'],['specials','Specials'],['notes','Notes'],['calls','Calls'],['daily','Daily'],['settings','Settings']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${view.tab===k}">${l}</button>`).join('')}</nav>
- <main>${note}${view.paste?pastePanel():''}${view.tab==='dealers'?dealersTab(t):view.tab==='targets'?targetsTab(t):view.tab==='specials'?specialsTab(t):view.tab==='notes'?notesTab(t):view.tab==='calls'?callsTab(t):view.tab==='daily'?dailyTab(t,idx):settingsTab(t)}</main>`;
+ <nav role="tablist">${[['dealers','Dealers'],['targets','Targets'],['specials','Specials'],['breakdown','Brands'],['notes','Notes'],['calls','Calls'],['daily','Daily'],['settings','Settings']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${view.tab===k}">${l}</button>`).join('')}</nav>
+ <main>${note}${view.paste?pastePanel():''}${view.tab==='dealers'?dealersTab(t):view.tab==='targets'?targetsTab(t):view.tab==='specials'?specialsTab(t):view.tab==='breakdown'?breakdownTab(t):view.tab==='notes'?notesTab(t):view.tab==='calls'?callsTab(t):view.tab==='daily'?dailyTab(t,idx):settingsTab(t)}</main>`;
 }
 
 function dealersTab(t){
@@ -407,7 +416,7 @@ function dealersTab(t){
    <div style="grid-column:1/-1"><span>Biggest brand drops</span>${b.down.slice(0,3).map(r=>esc(brandTitle(r.n))+' '+money(r.diff)).join(', ')||'None over $500'}</div>
    <div style="grid-column:1/-1"><span>Biggest brand gains</span>${b.up.slice(0,3).map(r=>esc(brandTitle(r.n))+' +'+money(r.diff)).join(', ')||'None over $500'}</div>`})()}
    <div><span>Phone</span><a href="tel:${esc(d.phone)}">${esc(d.phone)}</a></div>
-   <div style="grid-column:1/-1"><span>Last note</span>${(n=>n?fmtDate(n.date)+': '+esc(n.text):'None yet')(lastNote(d.id))} <button class="pbtn" data-notefor="${esc(d.id)}">Add note</button></div>
+   <div style="grid-column:1/-1"><span>Last note</span>${(n=>n?fmtDate(n.date)+': '+esc(n.text):'None yet')(lastNote(d.id))} <button class="pbtn" data-notefor="${esc(d.id)}">Add note</button> <button class="pbtn" data-brands="${esc(d.id)}">All brands</button></div>
   </div>`:''}</div>`}).join('');
  return`<div class="tools"><label for="sort">Sort</label><select id="sort">${opts.map(([k,l])=>`<option value="${k}" ${view.sort===k?'selected':''}>${l}</option>`).join('')}</select></div>
  <p class="hint">The bar's center line is the ${money(settings.goal)} daily goal. "Normal" compares this month to each dealer's own last 12 months.</p><div class="grid">${rows}</div>`;
@@ -434,7 +443,7 @@ function targetsTab(t){
    return`<div class="br"><div class="bh"><span>${esc(brandTitle(r.n))}</span><span class="neg">${money(r.diff)}</span></div><div class="nomatch" style="padding:0">${money(r.a)} this year vs. ${money(r.c)} last year</div>${sps}</div>`;
   }).join('')||`<div class="nomatch">No brand is down more than $500. Look at growth brands to build on.</div>`;
   return`<div class="tg"><h3>${esc(title(d.name))}</h3>
-   <div class="sum"><span>This month <em>${d.gap>0?money(d.gap)+' behind normal':'on or ahead of normal'}</em></span><span>YTD <em class="${b.chg<0?'neg':'up'}">${b.chg>=0?'+':''}${money(b.chg)}</em></span>${d.idle!=null&&d.idle>=settings.idle?`<span><em class="neg">${d.idle} days since last order</em></span>`:''}<span><a href="tel:${esc(d.phone)}">Call</a></span></div>
+   <div class="sum"><span>This month <em>${d.gap>0?money(d.gap)+' behind normal':'on or ahead of normal'}</em></span><span>YTD <em class="${b.chg<0?'neg':'up'}">${b.chg>=0?'+':''}${money(b.chg)}</em></span>${d.idle!=null&&d.idle>=settings.idle?`<span><em class="neg">${d.idle} days since last order</em></span>`:''}<span><a href="tel:${esc(d.phone)}">Call</a></span><span><button class="pbtn" data-brands="${esc(d.id)}">All brands</button></span></div>
    ${(n=>n?`<div class="nomatch">Last note ${fmtDate(n.date)}: ${esc(n.text.slice(0,120))}</div>`:'')(lastNote(d.id))}
    ${brandsHtml}</div>`;
  };
@@ -490,6 +499,39 @@ function notesTab(t){
  <h2>${sel?'Notes for '+esc(dn(sel)):'Recent notes'}</h2>
  ${shown.length?shown.map(r=>`<div class="item"><div style="flex:1"><b>${sel?'':esc(dn(r.id))+', '}${fmtDate(r.date)}</b><small class="note">${esc(r.text)}${r.follow?`\nFollow up ${fmtDate(r.follow)}${r.done?' (done)':''}`:''}</small></div><button class="pbtn" data-delnote="${esc(r.id)}|${r.i}">Delete</button></div>`).join(''):'<p class="hint">No notes yet.</p>'}
  <p class="hint" style="margin-top:14px">Notes stay on this iPad only. <button class="pbtn" data-act="copynotes">Copy all notes</button> to paste a backup into Notes or an email.</p>`;
+}
+
+
+function breakdownTab(t){
+ if(!brands)return`<div class="empty">Unlock brand data in Settings first.</div>`;
+ const list=[...t.list].filter(d=>brands.dealers[d.id]).sort((a,b)=>a.name.localeCompare(b.name));
+ const sel=view.bd||(list[0]&&list[0].id)||'';
+ const d=t.list.find(x=>x.id===sel),bd=brands.dealers[sel];
+ const pick=`<div class="tools" style="flex-wrap:wrap"><label for="bdsel">Dealer</label><select id="bdsel" style="flex:1;min-width:220px">${list.map(x=>`<option value="${esc(x.id)}" ${x.id===sel?'selected':''}>${esc(title(x.name))}</option>`).join('')}</select>
+  <label for="bsort">Sort</label><select id="bsort">${[['change','Biggest drop first'],['this','Most sales this year'],['name','Brand A to Z']].map(([k,l])=>`<option value="${k}" ${view.bsort===k?'selected':''}>${l}</option>`).join('')}</select></div>`;
+ if(!bd)return pick+`<div class="empty">No brand data for this dealer.</div>`;
+ const rows=bd.b.map(([n,a,c])=>({n,a,c,diff:a-c,pct:c?(a-c)/c:null,m:matchSpecials(n)}));
+ const S={change:(x,y)=>x.diff-y.diff,this:(x,y)=>y.a-x.a,name:(x,y)=>x.n.localeCompare(y.n)};
+ rows.sort(S[view.bsort]||S.change);
+ const down=rows.filter(r=>r.diff<0),up=rows.filter(r=>r.diff>=0);
+ const chg=bd.y26-bd.y25,withProg=down.filter(r=>r.m.length).length;
+ const dl=p=>{const x=daysLeft(p.ends);return x==null?'ongoing':x===0?'ends today':x+' days left'};
+ const table=(arr)=>`<div class="scroll"><table class="bt"><thead><tr><th>Brand</th><th style="text-align:right">This year</th><th style="text-align:right">Last year</th><th style="text-align:right">Change</th><th>Live programs</th></tr></thead><tbody>
+  ${arr.map(r=>`<tr><td><span class="tick ${r.m.length?'on':''}"></span><b>${esc(brandTitle(r.n))}</b></td>
+   <td class="n">${money(r.a)}</td><td class="n">${money(r.c)}</td>
+   <td class="n"><b class="${r.diff<0?'neg':'up'}">${r.diff>=0?'+':''}${money(r.diff)}</b>${r.pct!=null?`<div class="prog">${r.diff>=0?'+':''}${Math.round(r.pct*100)}%</div>`:'<div class="prog">new</div>'}</td>
+   <td>${r.m.length?r.m.slice(0,3).map(p=>`<div class="prog"><b>${esc(p.name)}</b>, ${dl(p)}</div>`).join('')+(r.m.length>3?`<div class="prog">+${r.m.length-3} more</div>`:''):'<div class="prog">None this month</div>'}</td></tr>`).join('')}
+ </tbody></table></div>`;
+ const top=down[0],share=top&&down.length?Math.round((top.c-top.a)/down.reduce((s,r)=>s+(r.c-r.a),0)*100):0;
+ const read=down.length?`${esc(brandTitle(top.n))} is down ${money(-top.diff)}, ${share}% of this dealer's brand losses. ${share>=50?'Fix that line and most of the year comes back.':'The loss is spread out, so plan on several conversations.'}`:'No brand is down. Lead with what is growing.';
+ const best=up.filter(r=>r.diff>0).sort((x,y)=>y.diff-x.diff)[0];
+ return pick+`<div class="tg"><h3>${esc(title(d.name))}</h3>
+  <div class="sum"><span>YTD <em>${money(bd.y26)}</em> vs. <em>${money(bd.y25)}</em></span><span><em class="${chg<0?'neg':'up'}">${chg>=0?'+':''}${money(chg)}</em>${bd.y25?' ('+(chg>=0?'+':'')+Math.round(chg/bd.y25*100)+'%)':''}</span><span>This month <em>${money(d.mtd)}</em></span>${(n=>n?`<span>Last note <em>${fmtDate(n.date)}</em></span>`:'')(lastNote(d.id))}</div>
+  <p style="margin:6px 0 0">${read}${best?` Best growth is ${esc(brandTitle(best.n))} at +${money(best.diff)}, a good opener.`:''}</p>
+  <p class="hint" style="margin:6px 0 0">${down.length} brands down, ${withProg} with a live program. Blue dot means a program is running. Brand data from ${brands.asOf?fmtDate(brands.asOf):'last pull'}.</p>
+  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="pbtn" data-notefor="${esc(d.id)}">Add note</button><a class="pbtn" href="tel:${esc(d.phone)}">Call</a></div></div>
+  <h2>Down</h2>${down.length?table(down):'<p class="hint">None.</p>'}
+  <h2>Up or flat</h2>${up.length?table(up):'<p class="hint">None.</p>'}`;
 }
 
 function callsTab(t){
@@ -550,13 +592,14 @@ function settingsTab(t){
 }
 
 document.addEventListener('click',async e=>{
- const b=e.target.closest('[data-tab],[data-open],[data-act],[data-del],[data-pitch],[data-unpitch],[data-done],[data-delnote],[data-notefor]');if(!b)return;
+ const b=e.target.closest('[data-tab],[data-open],[data-act],[data-del],[data-pitch],[data-unpitch],[data-done],[data-delnote],[data-notefor],[data-brands]');if(!b)return;
  if(b.dataset.tab){view.tab=b.dataset.tab;view.note=null;render();return}
  if(b.dataset.open){view.open=view.open===b.dataset.open?null:b.dataset.open;render();return}
  if(b.dataset.del){const d=b.dataset.del;if(!confirm('Remove the '+fmtDate(d)+' file?'))return;
   index=index.filter(x=>x!==d);delete snaps[d];await sdel(K.snap(d));await sset(K.idx,index);view.note={t:'Removed '+fmtDate(d)+'.'};render();return}
  if(b.dataset.act==='upload')document.getElementById('file').click();
  if(b.dataset.act==='brandfile')document.getElementById('bfile').click();
+ if(b.dataset.brands){view.tab='breakdown';view.bd=b.dataset.brands;render();return}
  if(b.dataset.notefor){view.tab='notes';view.nd=b.dataset.notefor;render();return}
  if(b.dataset.act==='addnote'){const id=(document.getElementById('nd')||{}).value,txt=((document.getElementById('ntext')||{}).value||'').trim(),fo=(document.getElementById('nfollow')||{}).value||'';
   if(!id||!txt){view.note={t:'Choose a dealer and type a note first.',err:true};render();return}
@@ -583,6 +626,8 @@ document.addEventListener('change',async e=>{
  if(el.id==='sort'){view.sort=el.value;render();return}
  if(el.id==='tsort'){view.tsort=el.value;render();return}
  if(el.id==='nd'){view.nd=el.value;render();return}
+ if(el.id==='bdsel'){view.bd=el.value;render();return}
+ if(el.id==='bsort'){view.bsort=el.value;render();return}
  if(el.id==='bfile'&&el.files[0]){try{brands=parseBrandFile(await el.files[0].text());const ok=await sset(K.brands,brands);view.tab='targets';view.note={t:`Brand data loaded for ${Object.keys(brands.dealers).length} dealers.${ok||!canSave()?'':' It could not be saved, so it will be gone next time.'}`}}catch(err){view.note={t:err.message,err:true}}el.value='';render();return}
  if(el.id==='goal'||el.id==='idle'){const v=parseFloat(el.value);if(isFinite(v)&&v>=(el.id==='idle'?1:0)){settings[el.id]=v;await sset(K.set,settings);render()}return}
  if(el.dataset.inc){const id=el.dataset.inc;settings.exclude=el.checked?settings.exclude.filter(x=>x!==id):[...settings.exclude,id];await sset(K.set,settings);render();return}

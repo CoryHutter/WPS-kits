@@ -64,7 +64,9 @@ h2{font-size:16px;margin:18px 4px 4px}
 .neg{color:var(--stop)}
 .grid{display:block}
 @media (min-width:820px){.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}.grid .d,.grid .tg{margin-bottom:0}.stats{grid-template-columns:repeat(3,1fr)}}
-nav button{font-size:13px}
+nav button{font-size:13px;padding:13px 2px}
+textarea,input[type=date],input[type=search]{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%}
+.note{white-space:pre-wrap}
 .tg{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px}
 .tg h3{margin:0;font-size:16px}
 .tg .sum{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--slate);margin:4px 0 8px}
@@ -185,11 +187,11 @@ function compute(index,snaps,settings){
 }
 //LOGIC-END
 
-const K={set:'dst:settings',idx:'dst:index',snap:d=>'dst:snap:'+d,brands:'dst:brands',pitch:'dst:pitches'};
-let brands=null,pitches=[],specials={list:[],src:''};
+const K={set:'dst:settings',idx:'dst:index',snap:d=>'dst:snap:'+d,brands:'dst:brands',pitch:'dst:pitches',notes:'dst:notes'};
+let brands=null,pitches=[],notes={},specials={list:[],src:''};
 let settings={goal:500,idle:14,exclude:['1213','2260312']};
 let index=[];const snaps={};
-let view={tab:'dealers',sort:'mtd',open:null,note:null,tsort:'behind'};
+let view={tab:'dealers',sort:'mtd',open:null,note:null,tsort:'behind',sq:'',nd:''};
 // Saving: uses the phone's browser storage when hosted (GitHub Pages).
 // Falls back to memory only if saving is blocked, without throwing errors.
 let store='memory';const mem={};
@@ -271,7 +273,7 @@ async function loadSpecials(){
   const r=await fetch('specials.html',{cache:'no-cache'});if(!r.ok)throw 0;
   const m=(await r.text()).match(/const PROGRAMS\s*=\s*(\[[\s\S]*?\n\]);/);if(!m)throw 0;
   const arr=Function('"use strict";return '+m[1])();
-  specials={list:arr.map(p=>({name:p.name,ends:p.ends||'',brands:p.brands||[]})),src:'Specials Board'};
+  specials={list:arr.map(p=>({name:p.name,ends:p.ends||'',brands:p.brands||[],offer:p.offer||'',cat:p.cat||'',local:!!p.local})),src:'Specials Board'};
  }catch(e){specials={list:FALLBACK,src:'built-in September list'}}
 }
 function matchSpecials(brand){
@@ -321,7 +323,7 @@ async function init(){
   index=index.filter(d=>snaps[d]||d<(before||''));
  }
  if(SEED.trim()&&!st&&!Object.keys(snaps).length){await saveSnap(toSnapshot(SEED));await sset(K.set,settings)}
- brands=await sget(K.brands);pitches=(await sget(K.pitch))||[];await loadSpecials();
+ brands=await sget(K.brands);pitches=(await sget(K.pitch))||[];notes=(await sget(K.notes))||{};await loadSpecials();
  if(!canSave())view.note={t:"Saving is blocked in this preview, so uploads last only until you close it. Open the GitHub Pages version to keep your history."};
  render();
 }
@@ -377,8 +379,8 @@ function render(){
    return`<div class="stat"><b class="${a<c?'neg':'up'}">${a>=c?'+':''}${money(a-c)}</b><span>Year to date vs. last year (${c?pctTxt(a/c):'n/a'}), brand data ${brands.asOf?fmtDate(brands.asOf):''}</span></div>`})()}
   <div class="stat"><b>${t.list.filter(d=>d.idle==null||d.idle>=settings.idle).length}</b><span>Dealers with no order in ${settings.idle}+ days</span></div>
  </div>
- <nav role="tablist">${[['dealers','Dealers'],['targets','Targets'],['calls','Call list'],['daily','Daily'],['settings','Settings']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${view.tab===k}">${l}</button>`).join('')}</nav>
- <main>${note}${view.paste?pastePanel():''}${view.tab==='dealers'?dealersTab(t):view.tab==='targets'?targetsTab(t):view.tab==='calls'?callsTab(t):view.tab==='daily'?dailyTab(t,idx):settingsTab(t)}</main>`;
+ <nav role="tablist">${[['dealers','Dealers'],['targets','Targets'],['specials','Specials'],['notes','Notes'],['calls','Calls'],['daily','Daily'],['settings','Settings']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${view.tab===k}">${l}</button>`).join('')}</nav>
+ <main>${note}${view.paste?pastePanel():''}${view.tab==='dealers'?dealersTab(t):view.tab==='targets'?targetsTab(t):view.tab==='specials'?specialsTab(t):view.tab==='notes'?notesTab(t):view.tab==='calls'?callsTab(t):view.tab==='daily'?dailyTab(t,idx):settingsTab(t)}</main>`;
 }
 
 function dealersTab(t){
@@ -402,6 +404,7 @@ function dealersTab(t){
    <div style="grid-column:1/-1"><span>Biggest brand drops</span>${b.down.slice(0,3).map(r=>esc(brandTitle(r.n))+' '+money(r.diff)).join(', ')||'None over $500'}</div>
    <div style="grid-column:1/-1"><span>Biggest brand gains</span>${b.up.slice(0,3).map(r=>esc(brandTitle(r.n))+' +'+money(r.diff)).join(', ')||'None over $500'}</div>`})()}
    <div><span>Phone</span><a href="tel:${esc(d.phone)}">${esc(d.phone)}</a></div>
+   <div style="grid-column:1/-1"><span>Last note</span>${(n=>n?fmtDate(n.date)+': '+esc(n.text):'None yet')(lastNote(d.id))} <button class="pbtn" data-notefor="${esc(d.id)}">Add note</button></div>
   </div>`:''}</div>`}).join('');
  return`<div class="tools"><label for="sort">Sort</label><select id="sort">${opts.map(([k,l])=>`<option value="${k}" ${view.sort===k?'selected':''}>${l}</option>`).join('')}</select></div>
  <p class="hint">The bar's center line is the ${money(settings.goal)} daily goal. "Normal" compares this month to each dealer's own last 12 months.</p><div class="grid">${rows}</div>`;
@@ -429,6 +432,7 @@ function targetsTab(t){
   }).join('')||`<div class="nomatch">No brand is down more than $500. Look at growth brands to build on.</div>`;
   return`<div class="tg"><h3>${esc(title(d.name))}</h3>
    <div class="sum"><span>This month <em>${d.gap>0?money(d.gap)+' behind normal':'on or ahead of normal'}</em></span><span>YTD <em class="${b.chg<0?'neg':'up'}">${b.chg>=0?'+':''}${money(b.chg)}</em></span>${d.idle!=null&&d.idle>=settings.idle?`<span><em class="neg">${d.idle} days since last order</em></span>`:''}<span><a href="tel:${esc(d.phone)}">Call</a></span></div>
+   ${(n=>n?`<div class="nomatch">Last note ${fmtDate(n.date)}: ${esc(n.text.slice(0,120))}</div>`:'')(lastNote(d.id))}
    ${brandsHtml}</div>`;
  };
  return`<div class="tools"><label for="tsort">Sort</label><select id="tsort">${opts.map(([k,l])=>`<option value="${k}" ${view.tsort===k?'selected':''}>${l}</option>`).join('')}</select></div>
@@ -436,11 +440,59 @@ function targetsTab(t){
  <div class="grid">${items.map(card).join('')}</div>`;
 }
 
+
+function lastNote(id){const n=notes[id];return n&&n.length?n[n.length-1]:null}
+function followUps(){const out=[];Object.entries(notes).forEach(([id,arr])=>arr.forEach((n,i)=>{if(n.follow&&!n.done)out.push({id,i,...n})}));return out.sort((a,b)=>a.follow.localeCompare(b.follow))}
+
+function specialsTab(t){
+ const q=view.sq.toLowerCase(),today=todayIso();
+ const live=specials.list.filter(p=>!p.ends||p.ends>=today)
+  .filter(p=>!q||(p.name+' '+(p.offer||'')+' '+p.brands.join(' ')).toLowerCase().includes(q))
+  .sort((a,b)=>(daysLeft(a.ends)??9999)-(daysLeft(b.ends)??9999));
+ const names={};t.list.forEach(d=>names[d.id]=d);
+ const fits=p=>{if(!brands)return[];const keys=new Set(p.brands.map(bn));const out=[];
+  Object.entries(brands.dealers).forEach(([id,bd])=>{if(settings.exclude.includes(id)||!names[id])return;
+   let loss=0,hit=[];bd.b.forEach(([n,a,c])=>{if(keys.has(bn(n))&&a-c<=-250){loss+=c-a;hit.push(brandTitle(n))}});
+   if(loss)out.push({id,loss,hit})});return out.sort((a,b)=>b.loss-a.loss)};
+ const card=p=>{const dl=daysLeft(p.ends),f=fits(p);
+  return`<div class="tg"><h3>${esc(p.name)}</h3>
+  <div class="sum"><span class="${dl!=null&&dl<=7?'neg':''}"><em>${dl==null?'Ongoing':dl===0?'Ends today':dl+' days left'}</em></span>${p.local?'<span><em>Your region only</em></span>':''}${p.brands.length?`<span>${esc(p.brands.slice(0,8).join(', '))}${p.brands.length>8?'...':''}</span>`:''}</div>
+  ${p.offer?`<p class="hint" style="margin:0 0 8px;color:var(--ink)">${esc(p.offer)}</p>`:''}
+  ${brands&&p.brands.length?`<div class="br"><div class="bh"><span>Dealers this fits</span><span>${f.length}</span></div>${f.slice(0,6).map(x=>`<div class="sp"><div>${esc(title(names[x.id].name))}<br><small>${esc(x.hit.join(', '))} down ${money(x.loss)}</small></div><a class="pbtn" href="tel:${esc(names[x.id].phone)}">Call</a></div>`).join('')||'<div class="nomatch">No dealers are down on these brands.</div>'}</div>`:''}
+  </div>`};
+ return`<div class="tools" style="display:block"><input type="search" id="sq" placeholder="Search a brand or program" value="${esc(view.sq)}"></div>
+ <p class="hint">${live.length} live programs from the ${esc(specials.src)}, soonest ending first.${specials.src==='Specials Board'?'':' Full offer details show once the tracker is next to specials.html on GitHub.'}</p>
+ <div class="grid">${live.map(card).join('')}</div>`;
+}
+
+function notesTab(t){
+ const byName=[...t.list].sort((a,b)=>a.name.localeCompare(b.name));
+ const sel=view.nd||'';
+ const fu=followUps(),today=todayIso();
+ const dn=id=>{const d=t.list.find(x=>x.id===id);return d?title(d.name):'#'+id};
+ const recent=[];Object.entries(notes).forEach(([id,arr])=>arr.forEach((n,i)=>recent.push({id,i,...n})));
+ recent.sort((a,b)=>(b.date+b.i).localeCompare(a.date+a.i));
+ const shown=sel?recent.filter(r=>r.id===sel):recent.slice(0,30);
+ return`<div class="set">
+  <label class="hint" for="nd" style="display:block;margin:0 0 4px">Dealer</label>
+  <select id="nd" style="width:100%;margin-bottom:8px"><option value="">Choose a dealer</option>${byName.map(d=>`<option value="${esc(d.id)}" ${sel===d.id?'selected':''}>${esc(title(d.name))}</option>`).join('')}</select>
+  <textarea id="ntext" rows="3" placeholder="What happened on the call or visit?"></textarea>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+   <label class="hint" for="nfollow" style="margin:0">Follow up</label><input type="date" id="nfollow" style="width:auto">
+   <button class="btn" data-act="addnote">Save note</button></div></div>
+ <h2>Follow-ups</h2>
+ ${fu.length?fu.map(f=>`<div class="item"><div><b>${esc(dn(f.id))}</b><small class="${f.follow<=today?'neg':''}">${f.follow<today?'Overdue, was ':f.follow===today?'Due today, ':'Due '}${fmtDate(f.follow)}. ${esc(f.text.slice(0,90))}</small></div><button class="pbtn" data-done="${esc(f.id)}|${f.i}">Done</button></div>`).join(''):'<p class="hint">No follow-ups scheduled.</p>'}
+ <h2>${sel?'Notes for '+esc(dn(sel)):'Recent notes'}</h2>
+ ${shown.length?shown.map(r=>`<div class="item"><div style="flex:1"><b>${sel?'':esc(dn(r.id))+', '}${fmtDate(r.date)}</b><small class="note">${esc(r.text)}${r.follow?`\nFollow up ${fmtDate(r.follow)}${r.done?' (done)':''}`:''}</small></div><button class="pbtn" data-delnote="${esc(r.id)}|${r.i}">Delete</button></div>`).join(''):'<p class="hint">No notes yet.</p>'}
+ <p class="hint" style="margin-top:14px">Notes stay on this iPad only. <button class="pbtn" data-act="copynotes">Copy all notes</button> to paste a backup into Notes or an email.</p>`;
+}
+
 function callsTab(t){
  const item=(d,sub)=>`<div class="item"><div><b>${esc(title(d.name))}</b><small>${sub}</small></div><a href="tel:${esc(d.phone)}">Call</a></div>`;
  const idle=t.list.filter(d=>d.idle==null||d.idle>=settings.idle).sort((a,b)=>(b.idle??9999)-(a.idle??9999));
  const behind=t.list.filter(d=>d.base>0&&d.norm<.6&&!(d.idle==null||d.idle>=settings.idle)&&d.gap>250).sort((a,b)=>b.gap-a.gap);
- return`<h2>No order in ${settings.idle}+ days</h2><p class="hint">Sorted by longest wait.</p>
+ const due=followUps().filter(f=>f.follow<=todayIso());
+ return`${due.length?`<div class="note" style="background:#FFF6DF;border:1px solid #F2D58A;border-radius:8px;padding:10px 12px;margin-bottom:12px">${due.length} follow-up${due.length>1?'s':''} due. See the Notes tab.</div>`:''}<h2>No order in ${settings.idle}+ days</h2><p class="hint">Sorted by longest wait.</p>
  ${idle.length?idle.map(d=>item(d,d.idle==null?'No orders on file':`Last order ${fmtDate(d.lo)}, ${d.idle} days ago. ${money(d.p12)} last 12 months`)).join(''):'<p class="hint">Every dealer has ordered recently.</p>'}
  <h2>Buying, but well below their normal</h2><p class="hint">Under 60% of their usual pace, sorted by dollars behind.</p>
  ${behind.length?behind.map(d=>item(d,`${money(d.gap)} behind normal. ${pctTxt(d.norm)} of usual pace`)).join(''):'<p class="hint">No active dealers are far below normal.</p>'}`;
@@ -493,13 +545,23 @@ function settingsTab(t){
 }
 
 document.addEventListener('click',async e=>{
- const b=e.target.closest('[data-tab],[data-open],[data-act],[data-del],[data-pitch],[data-unpitch]');if(!b)return;
+ const b=e.target.closest('[data-tab],[data-open],[data-act],[data-del],[data-pitch],[data-unpitch],[data-done],[data-delnote],[data-notefor]');if(!b)return;
  if(b.dataset.tab){view.tab=b.dataset.tab;view.note=null;render();return}
  if(b.dataset.open){view.open=view.open===b.dataset.open?null:b.dataset.open;render();return}
  if(b.dataset.del){const d=b.dataset.del;if(!confirm('Remove the '+fmtDate(d)+' file?'))return;
   index=index.filter(x=>x!==d);delete snaps[d];await sdel(K.snap(d));await sset(K.idx,index);view.note={t:'Removed '+fmtDate(d)+'.'};render();return}
  if(b.dataset.act==='upload')document.getElementById('file').click();
  if(b.dataset.act==='brandfile')document.getElementById('bfile').click();
+ if(b.dataset.notefor){view.tab='notes';view.nd=b.dataset.notefor;render();return}
+ if(b.dataset.act==='addnote'){const id=(document.getElementById('nd')||{}).value,txt=((document.getElementById('ntext')||{}).value||'').trim(),fo=(document.getElementById('nfollow')||{}).value||'';
+  if(!id||!txt){view.note={t:'Choose a dealer and type a note first.',err:true};render();return}
+  (notes[id]=notes[id]||[]).push({date:todayIso(),text:txt,follow:fo,done:false});view.nd=id;
+  const ok=await sset(K.notes,notes);view.note={t:ok||!canSave()?'Note saved.':'Note could not be saved on this device.',err:!(ok||!canSave())};render();return}
+ if(b.dataset.done){const [id,i]=b.dataset.done.split('|');if(notes[id]&&notes[id][i]){notes[id][i].done=true;await sset(K.notes,notes)}render();return}
+ if(b.dataset.delnote){if(!confirm('Delete this note?'))return;const [id,i]=b.dataset.delnote.split('|');if(notes[id]){notes[id].splice(+i,1);if(!notes[id].length)delete notes[id];await sset(K.notes,notes)}render();return}
+ if(b.dataset.act==='copynotes'){const t=compute(loaded(),snaps,settings);const nm=id=>{const d=t.list.find(x=>x.id===id);return d?title(d.name):'#'+id};
+  const txt=Object.entries(notes).map(([id,arr])=>nm(id)+'\n'+arr.map(n=>'  '+n.date+': '+n.text+(n.follow?' (follow up '+n.follow+(n.done?', done':'')+')':'')).join('\n')).join('\n\n');
+  try{await navigator.clipboard.writeText(txt||'No notes');view.note={t:'All notes copied. Paste them into Notes or an email.'}}catch(e){view.note={t:'Copy was blocked. Try again.',err:true}}render();return}
  if(b.dataset.act==='paste'){view.paste=true;render();return}
  if(b.dataset.act==='pasteclose'){view.paste=false;render();return}
  if(b.dataset.act==='pasteload'){view.pasteText=(document.getElementById('pastebox')||{}).value||'';await loadDealerText(view.pasteText);if(!view.note||!view.note.err)view.pasteText='';return}
@@ -515,10 +577,12 @@ document.addEventListener('change',async e=>{
  const el=e.target;
  if(el.id==='sort'){view.sort=el.value;render();return}
  if(el.id==='tsort'){view.tsort=el.value;render();return}
+ if(el.id==='nd'){view.nd=el.value;render();return}
  if(el.id==='bfile'&&el.files[0]){try{brands=parseBrandFile(await el.files[0].text());const ok=await sset(K.brands,brands);view.tab='targets';view.note={t:`Brand data loaded for ${Object.keys(brands.dealers).length} dealers.${ok||!canSave()?'':' It could not be saved, so it will be gone next time.'}`}}catch(err){view.note={t:err.message,err:true}}el.value='';render();return}
  if(el.id==='goal'||el.id==='idle'){const v=parseFloat(el.value);if(isFinite(v)&&v>=(el.id==='idle'?1:0)){settings[el.id]=v;await sset(K.set,settings);render()}return}
  if(el.dataset.inc){const id=el.dataset.inc;settings.exclude=el.checked?settings.exclude.filter(x=>x!==id):[...settings.exclude,id];await sset(K.set,settings);render();return}
  if(el.id==='file'&&el.files[0]){const f=el.files[0];el.value='';await loadDealerText(await f.text());}
 });
+let sqT;document.addEventListener('input',e=>{if(e.target.id==='sq'){clearTimeout(sqT);const v=e.target.value;sqT=setTimeout(()=>{view.sq=v;render();const s=document.getElementById('sq');if(s){s.focus();s.setSelectionRange(v.length,v.length)}},400)}});
 init();
 </script>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pick 3 Headroom Checker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f6; --panel:#ffffff; --ink:#152036; --muted:#5b6780; --line:#d5dbe6;
+  --navy:#123a8a; --navy-ink:#ffffff;
+  --go:#1f8a4c; --go-bg:#e3f4ea; --warn:#b7791f; --warn-bg:#fdf1dc;
+  --stop:#c0392b; --stop-bg:#fbe5e2; --prog:#6b46c1; --prog-bg:#eee8fb;
+  --off:#7a8499; --off-bg:#eceff4; --lock:#9aa7c0;
+  --radius:10px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1522; --panel:#18213a; --ink:#e8ecf5; --muted:#9aa6c0; --line:#2b3654;
+    --navy:#1d4fb8; --go:#4cc47f; --go-bg:#173a28; --warn:#e6b04a; --warn-bg:#3b2f15;
+    --stop:#ef6f60; --stop-bg:#3d1e1b; --prog:#a88bf0; --prog-bg:#2a2146; --off:#8d97ad; --off-bg:#222b43; --lock:#55627f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1522; --panel:#18213a; --ink:#e8ecf5; --muted:#9aa6c0; --line:#2b3654;
+  --navy:#1d4fb8; --go:#4cc47f; --go-bg:#173a28; --warn:#e6b04a; --warn-bg:#3b2f15;
+  --stop:#ef6f60; --stop-bg:#3d1e1b; --prog:#a88bf0; --prog-bg:#2a2146; --off:#8d97ad; --off-bg:#222b43; --lock:#55627f;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Barlow,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+h1,h2,h3,.cond{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;letter-spacing:.01em}
+header{background:var(--navy);color:var(--navy-ink);padding:18px 20px 16px}
+.wrap{max-width:980px;margin:0 auto}
+header h1{margin:0;font-size:2rem;font-weight:700;line-height:1.05}
+header p{margin:4px 0 0;opacity:.85;font-size:.95rem}
+.tiers{display:flex;gap:6px;margin-top:12px;overflow-x:auto}
+.tiers div{flex:1 0 auto;background:rgba(255,255,255,.12);border-radius:8px;padding:6px 10px;min-width:88px}
+.tiers b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:1.35rem;line-height:1}
+.tiers span{font-size:.78rem;opacity:.85}
+nav{display:flex;gap:4px;padding:10px 20px 0;max-width:980px;margin:0 auto}
+nav button{flex:1;font:600 1rem Barlow,sans-serif;padding:10px 8px;border:1px solid var(--line);border-bottom:none;background:transparent;color:var(--muted);border-radius:10px 10px 0 0;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--panel);color:var(--ink)}
+main{max-width:980px;margin:0 auto;padding:0 20px 40px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:0 0 var(--radius) var(--radius);padding:18px}
+.tab{display:none}.tab.on{display:block}
+label{font-weight:600;font-size:.9rem;display:block;margin-bottom:6px}
+textarea,input[type=text],input[type=search]{width:100%;font:15px/1.4 Barlow,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea{min-height:130px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:12px}
+.row>div{flex:1 1 220px}
+.btn{font:600 1rem Barlow,sans-serif;padding:11px 18px;border-radius:8px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer;min-height:44px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:focus-visible,nav button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #f2b705;outline-offset:2px}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.msg{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--stop-bg);color:var(--stop);display:none}
+.msg.ok{background:var(--go-bg);color:var(--go)}
+.dealer-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin:22px 0 4px}
+.dealer-head h2{margin:0;font-size:1.7rem}
+.counts{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.count{border-radius:8px;padding:6px 10px;font-size:.88rem;font-weight:600}
+.sect{margin-top:20px}
+.sect h3{margin:0 0 2px;font-size:1.3rem;display:flex;align-items:center;gap:8px}
+.sect h3 i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.sect > p{margin:0 0 8px;color:var(--muted);font-size:.9rem}
+.item{border-top:1px solid var(--line);padding:10px 0;display:grid;grid-template-columns:minmax(150px,1.1fr) 2fr auto;gap:6px 14px;align-items:center}
+.item .nm{font-weight:600}
+.item .sub{color:var(--muted);font-size:.82rem;font-weight:400}
+.item .res{text-align:right;min-width:92px}
+.item .res b{font-family:"Barlow Condensed",sans-serif;font-size:1.3rem;display:block;line-height:1}
+.item .res span{font-size:.78rem;color:var(--muted)}
+.chip{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 7px;border-radius:5px;margin:3px 4px 0 0}
+/* the gauge */
+.gauge{position:relative;height:22px;border-radius:5px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.gauge .lk{position:absolute;left:0;top:0;bottom:0;background:var(--lock)}
+.gauge .rm{position:absolute;top:0;bottom:0;background:var(--go);opacity:.85}
+.gauge .ov{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,var(--stop) 0 5px,transparent 5px 9px)}
+.gauge .cap{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
+.gauge .tk{position:absolute;top:0;height:7px;width:1px;background:var(--ink);opacity:.45}
+.gtext{font-size:.78rem;color:var(--muted);margin-top:3px}
+
+.lvs{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.lv{font-size:.7rem;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:2px 6px;text-align:center;line-height:1.2}
+.lv b{display:block;font-size:.8rem;color:var(--ink)}
+.lv.now{border-color:var(--navy);background:var(--go-bg);color:var(--go)}
+.lv.now b{color:var(--go)}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;color:var(--muted);font-weight:600}
+.scroll{overflow-x:auto}
+.empty{color:var(--muted);padding:18px 0}
+.lk-res{margin-top:10px}
+@media (max-width:620px){
+  header h1{font-size:1.6rem}
+  .item{grid-template-columns:1fr auto}
+  .item .g{grid-column:1 / -1;order:3}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Pick 3 headroom checker</h1>
+  <p>End of Q3 Pick 3, Sept 21–30, 2026. Lock-in plus Pick 3 can't go past the brand's max.</p>
+  <div class="tiers" aria-label="Pick 3 tiers">
+    <div><b>3%</b><span>$1,500+</span></div><div><b>5%</b><span>$4,500+</span></div><div><b>7%</b><span>$7,500+</span></div><div><b>10%</b><span>$10,500+</span></div><div><b>12%</b><span>$13,500+</span></div>
+  </div>
+</div></header>
+
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-t="check">Check a dealer</button>
+  <button role="tab" aria-selected="false" data-t="terr">Territory</button>
+  <button role="tab" aria-selected="false" data-t="look">Brand lookup</button>
+</nav>
+<main>
+<div class="panel">
+  <section class="tab on" id="t-check">
+    <label for="paste">Paste the dealer's lock-ins</label>
+    <textarea id="paste" placeholder="In the sales portal, open the dealer's Lock-Ins page, tap Copy to Clipboard, then paste here."></textarea>
+    <div class="row">
+      <div><label for="dname">Dealer (filled in from the paste if found)</label><input type="text" id="dname" placeholder="e.g. 930186 - Brenny's M/C Clinic"></div>
+      <div style="flex:0 0 auto;display:flex;gap:8px">
+        <button class="btn" id="go">Check lock-ins</button>
+        <button class="btn ghost" id="clear">Clear</button>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div id="out"></div>
+  </section>
+
+  <section class="tab" id="t-terr">
+    <p class="hint" style="margin-top:0">Every dealer you check is saved here on this device. Copy for Excel puts every brand line for every dealer on the clipboard, ready to paste into a sheet.</p>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="copyAll">Copy for Excel</button>
+      <button class="btn ghost" id="wipe">Remove all dealers</button>
+    </div>
+    <div class="msg" id="tmsg"></div>
+    <div class="scroll" id="terr"></div>
+  </section>
+
+  <section class="tab" id="t-look">
+    <label for="q">Find a brand on the max discount list</label>
+    <input type="search" id="q" placeholder="Brand name or code, e.g. Acerbis or 60">
+    <p class="hint">Shows the most Pick 3 can add when the dealer has no lock-in on that brand. Handy for picking the third brand.</p>
+    <div id="lres" class="lk-res"></div>
+  </section>
+</div>
+<p class="hint">Tire brands use the 2026 Tire Buy-In Program ladder; the unit counts are tire quantities and 24 or more adds dating terms. Other max discounts come from the WPS max discount list (5/26/2026 file). The portal lock-in page is a summary and may not show every lock-in, so confirm on the full list before quoting. Rule 4 still applies: check with your ASM and BMS.</p>
+</main>
+
+<script>
+const BR = {"15":{"n":"100-PERCENT","v":false,"t":"num","m":0.05},"131":{"n":"ABUS","v":false,"t":"none","nda":1},"50":{"n":"ACCEL","v":false,"t":"num","m":0.05},"60":{"n":"ACERBIS","v":false,"t":"num","m":0.05},"80":{"n":"ADAPTIV","v":false,"t":"none","nda":1},"140":{"n":"AIRHEAD","v":false,"t":"num","m":0.05},"145":{"n":"AIRPRO FORK","v":false,"t":"none","nda":1},"170":{"n":"ALL BALLS","v":true,"t":"num","m":0.1},"180":{"n":"ALL RITE","v":false,"t":"num","m":0.05},"193":{"n":"ALPINESTARS","v":false,"t":"prog","p":"Apparel Program","x":"No discounts on Airbag Systems"},"220":{"n":"ALTO","v":false,"t":"num","m":0.05},"310":{"n":"ANCRA","v":false,"t":"num","m":0.05},"312":{"n":"ANTIGRAVITY","v":false,"t":"batt","m":0.06},"315":{"n":"AO COOLERS","v":false,"t":"num","m":0.05},"277":{"n":"APM","v":false,"t":"none","nda":1},"320":{"n":"AQUACART","v":false,"t":"num","m":0.05},"325":{"n":"AQUATIC AV","v":false,"t":"none","nda":1},"340":{"n":"ARC","v":false,"t":"num","m":0.05},"365":{"n":"ARNOTT","v":false,"t":"none","nda":1},"380":{"n":"ATHENA","v":false,"t":"num","m":0.05},"390":{"n":"ATLANTIS","v":false,"t":"num","m":0.05},"410":{"n":"ATV TEK","v":false,"t":"none","nda":1},"430":{"n":"AVON","v":false,"t":"num","m":0.05},"185":{"n":"AWC","v":false,"t":"num","m":0.08},"435":{"n":"AXIA","v":false,"t":"none","nda":1},"440":{"n":"BAFFIN","v":false,"t":"prog","p":"Snow Apparel Program"},"3799":{"n":"BAGGERNATION","v":false,"t":"num","m":0.03,"x":"No discounts on handlebars"},"500":{"n":"BATTERY TENDER","v":true,"t":"none","x":"No discounts except for 56-1130 & Accessories","nda":1},"520":{"n":"BBR","v":false,"t":"num","m":0.03,"x":"No discounts on exhaust"},"620":{"n":"BDX","v":false,"t":"none","nda":1},"530":{"n":"BEARD","v":false,"t":"num","m":0.05},"540":{"n":"BEL-RAY","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"555":{"n":"BFGOODRICH","v":false,"t":"prog","p":"Tire Program"},"3750":{"n":"BIKE SPIRITS","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"120":{"n":"BLASTER","v":false,"t":"num","m":0.05},"630":{"n":"BLENDZALL","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"650":{"n":"BLOWSION","v":false,"t":"none","nda":1},"653":{"n":"BLU","v":false,"t":"none","nda":1},"660":{"n":"BLUE MARBLE","v":false,"t":"chem","m":0.08,"x":"No discounts on drums"},"680":{"n":"BOBSTER","v":false,"t":"num","m":0.05},"690":{"n":"BOLT","v":false,"t":"num","m":0.08},"725":{"n":"BOSS AUDIO","v":false,"t":"num","m":0.03},"750":{"n":"BOYESEN","v":false,"t":"none","nda":1},"780":{"n":"BRAKING","v":false,"t":"num","m":0.05},"6115":{"n":"BREMBO","v":false,"t":"num","m":0.05},"6112":{"n":"BRIDGESTONE","v":false,"t":"prog","p":"Tire Program"},"800":{"n":"BRONCO","v":false,"t":"num","m":0.08},"550":{"n":"BTL DESIGNS","v":false,"t":"num","m":0.05},"808":{"n":"BUBBA ROPES","v":false,"t":"none","nda":1},"820":{"n":"BULLDOG","v":false,"t":"none","nda":1},"840":{"n":"BURLY BRAND","v":false,"t":"none","nda":1},"864":{"n":"BYKAS","v":false,"t":"num","m":0.05},"870":{"n":"C&A","v":false,"t":"num","m":0.05},"880":{"n":"CALIBER","v":false,"t":"prog","p":"Brand program only"},"900":{"n":"CAMSO","v":false,"t":"num","m":0.05,"x":"No discounts on ATV/UTV track kits"},"920":{"n":"CANYON DANCER","v":false,"t":"num","m":0.03},"4600":{"n":"CARDO","v":false,"t":"num","m":0.1,"x":"None on Spirit headsets"},"1125":{"n":"CARLISLE","v":false,"t":"prog","p":"Tire Program"},"960":{"n":"CASTROL","v":false,"t":"chem","m":0.17,"x":"No discounts on drums"},"965":{"n":"CAT CRAP","v":false,"t":"num","m":0.05},"975":{"n":"CERWIN VEGA","v":false,"t":"num","m":0.03},"1010":{"n":"CFR","v":false,"t":"num","m":0.03},"1030":{"n":"CHRIS PRODUCTS","v":false,"t":"num","m":0.05},"1040":{"n":"CIPA","v":false,"t":"num","m":0.05},"1050":{"n":"CLASSIC ACC.","v":false,"t":"num","m":0.08},"1130":{"n":"CLYMER","v":false,"t":"num","m":0.05},"1132":{"n":"COBRA","v":false,"t":"num","m":0.03},"1145":{"n":"COLONY MACHINE","v":false,"t":"none","nda":1},"1150":{"n":"COMET","v":false,"t":"num","m":0.05},"1160":{"n":"COMETIC","v":false,"t":"num","m":0.05},"1195":{"n":"COMPUFIRE","v":false,"t":"none","nda":1},"1200":{"n":"CONDOR","v":false,"t":"none","nda":1},"1220":{"n":"COUNTERACT","v":false,"t":"num","m":0.03},"1230":{"n":"COUNTRY ENT.","v":false,"t":"none","nda":1},"1240":{"n":"COVERCRAFT","v":false,"t":"none","nda":1},"1260":{"n":"CRAMPBUSTER","v":false,"t":"num","m":0.05},"1280":{"n":"CRUZ TOOLS","v":false,"t":"num","m":0.05},"1020":{"n":"CST","v":false,"t":"prog","p":"Tire Program"},"1285":{"n":"CURT","v":false,"t":"num","m":0.05},"1310":{"n":"CYCLE ELECTRIC","v":false,"t":"num","m":0.03},"1305":{"n":"CYCLE PRO","v":false,"t":"num","m":0.05},"1327":{"n":"CYCLE WORKS","v":false,"t":"num","m":0.05},"1340":{"n":"CYLINDER WORKS","v":true,"t":"num","m":0.1},"1342":{"n":"CYRON","v":false,"t":"none","nda":1},"1350":{"n":"D.I.D","v":false,"t":"num","m":0.05},"1365":{"n":"DANNY GRAY","v":false,"t":"num","m":0.05},"1380":{"n":"DAYCO","v":false,"t":"num","m":0.08},"1390":{"n":"DAYTONA","v":false,"t":"none","nda":1},"1395":{"n":"DBK","v":false,"t":"none","x":"See Buy in program","nda":1},"1345":{"n":"D-COR","v":false,"t":"none","nda":1},"1400":{"n":"DEAD BOLT","v":false,"t":"num","m":0.05},"1420":{"n":"DEI","v":false,"t":"none","nda":1},"1430":{"n":"DEUTER","v":false,"t":"none","nda":1},"1445":{"n":"DEVIANT RACE PARTS","v":false,"t":"none","nda":1},"1465":{"n":"DIAG4 BIKE","v":false,"t":"none","nda":1},"1463":{"n":"DIAMOND AUDIO","v":false,"t":"num","m":0.05},"1468":{"n":"DIAMOND CHAIN","v":false,"t":"num","m":0.05},"1469":{"n":"DIAMOND LED","v":false,"t":"num","m":0.05},"1470":{"n":"DIRT DIGITS","v":false,"t":"num","m":0.05},"1475":{"n":"DIRT TRICKS","v":false,"t":"num","m":0.05},"1462":{"n":"DK CUSTOM PRODUCTS","v":false,"t":"none","nda":1},"1580":{"n":"DMP","v":false,"t":"num","m":0.05},"1507":{"n":"DOMINO RACING","v":false,"t":"num","m":0.03},"1510":{"n":"DOWCO","v":false,"t":"none","nda":1},"1545":{"n":"DRC","v":false,"t":"num","m":0.05},"1410":{"n":"DSS","v":false,"t":"none","nda":1},"1573":{"n":"DUBYA","v":false,"t":"none","nda":1},"1571":{"n":"DUNLOP","v":false,"t":"prog","p":"Tire Program"},"1575":{"n":"DUX","v":false,"t":"none","nda":1},"1505":{"n":"DWT","v":false,"t":"num","m":0.03},"1590":{"n":"DYNATEK","v":false,"t":"num","m":0.03},"1593":{"n":"DYNOJET","v":false,"t":"none","nda":1},"1594":{"n":"EAGLE GRIT","v":false,"t":"none","nda":1},"1595":{"n":"EASYMOVE","v":false,"t":"num","m":0.05},"1600":{"n":"EBC","v":true,"t":"num","m":0.05},"1610":{"n":"ECHO","v":false,"t":"num","m":0.05},"1625":{"n":"ECOXGEAR","v":false,"t":"num","m":0.03},"1640":{"n":"EK","v":false,"t":"num","m":0.08},"1655":{"n":"EKS BRAND","v":false,"t":"none","nda":1},"1665":{"n":"ELEMENT FIRE","v":false,"t":"num","m":0.05},"1605":{"n":"E-LINE ACCESSORIES","v":false,"t":"num","m":0.05},"1675":{"n":"EMERSON","v":false,"t":"num","m":0.05},"1680":{"n":"EMGO","v":false,"t":"num","m":0.05},"1705":{"n":"ENDURO ENGINEERING","v":false,"t":"num","m":0.05},"1685":{"n":"ENERGY ONE","v":false,"t":"num","m":0.05},"1695":{"n":"ENERGY SUSP.","v":false,"t":"num","m":0.05},"1330":{"n":"ENGINE ICE","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"1720":{"n":"EPI","v":false,"t":"num","m":0.05},"1730":{"n":"ERLANDSON","v":false,"t":"num","m":0.05},"1755":{"n":"EVANS","v":false,"t":"chem","m":0.08,"x":"No discounts on drums"},"1760":{"n":"EVS","v":false,"t":"num","m":0.03},"6116":{"n":"EXOCOM","v":false,"t":"num","m":0.05},"1815":{"n":"FACTOR 55","v":false,"t":"none","nda":1},"1840":{"n":"FEULING","v":false,"t":"num","m":0.03},"1860":{"n":"FIMCO","v":false,"t":"num","m":0.05},"1875":{"n":"FIRE POWER","t":"split","v":false},"1880":{"n":"FIRESTIK","v":false,"t":"num","m":0.05},"1883":{"n":"FIRST ALERT","v":false,"t":"num","m":0.05},"1890":{"n":"FITCH","v":false,"t":"none","nda":1},"1906":{"n":"FLAT OUT","v":false,"t":"num","m":0.05},"1910":{"n":"FLO MOTORSPORTS","v":false,"t":"num","m":0.03},"1930":{"n":"FLY RACING","v":false,"t":"prog","p":"Apparel Program"},"1940":{"n":"FMF","v":false,"t":"none","nda":1},"1955":{"n":"FORBIDDEN","v":false,"t":"num","m":0.08},"1960":{"n":"FOUR TWELVE","v":false,"t":"num","m":0.05},"1990":{"n":"FOX","v":false,"t":"none","nda":1},"2027":{"n":"FROGZ SKIN","v":false,"t":"num","m":0.05},"2050":{"n":"FUEL TOOL","v":false,"t":"num","m":0.05},"2055":{"n":"FUELPAX","v":false,"t":"num","m":0.05},"2060":{"n":"FULL THROTTLE","v":false,"t":"none","nda":1},"2083":{"n":"FUNNELWEB","v":false,"t":"num","m":0.05},"2090":{"n":"GAERNE","v":false,"t":"num","m":0.05},"2115":{"n":"GARDNERWESTCOTT","v":false,"t":"num","m":0.05},"2120":{"n":"GARLAND","v":false,"t":"num","m":0.05},"2165":{"n":"GBC","v":false,"t":"prog","p":"Tire Program"},"2100":{"n":"GBRAKES","v":false,"t":"num","m":0.05},"2175":{"n":"GEARS","v":false,"t":"num","m":0.05},"2180":{"n":"GET","v":false,"t":"none","nda":1},"2185":{"n":"GIANT LOOP","v":false,"t":"num","m":0.05},"2190":{"n":"GIVI","v":false,"t":"none","nda":1},"6053":{"n":"GLOVETACTS","v":false,"t":"num","m":0.05},"2200":{"n":"GMAX","v":false,"t":"prog","p":"Apparel Program"},"2205":{"n":"GO CRUISE","v":false,"t":"none","nda":1},"2235":{"n":"GOLAN","v":false,"t":"none","nda":1},"2245":{"n":"GOODRIDGE","v":false,"t":"num","m":0.05},"2273":{"n":"GRANT","v":false,"t":"num","m":0.03},"2277":{"n":"GROTE","v":false,"t":"num","m":0.05},"5440":{"n":"GRUNGE BRUSH","v":false,"t":"num","m":0.05},"2300":{"n":"HANDY","v":false,"t":"none","nda":1},"2310":{"n":"HARDDRIVE","t":"split","v":false},"2320":{"n":"HARDLINE","v":false,"t":"num","m":0.03},"2332":{"n":"HASTINGS MFG","v":false,"t":"none","nda":1},"2335":{"n":"HAWG HALTERS INC","v":false,"t":"none","nda":1},"2340":{"n":"HAYDEN","v":false,"t":"num","m":0.03},"2355":{"n":"HEAT DEMON","v":false,"t":"none","nda":1},"2360":{"n":"HELIBARS","v":false,"t":"num","m":0.03},"2370":{"n":"HELIX","v":false,"t":"none","nda":1},"2400":{"n":"HIFLOFILTRO","v":false,"t":"num","m":0.05},"2410":{"n":"HIGH LIFTER","v":false,"t":"none","nda":1},"2420":{"n":"HIGH ROLLER","v":false,"t":"none","nda":1},"2435":{"n":"HIGHWAY 21","v":false,"t":"none","nda":1},"2440":{"n":"HINSON","v":true,"t":"num","m":0.05},"2475":{"n":"HOFMANN DESIGNS","v":false,"t":"none","nda":1},"2485":{"n":"HOG WASH","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"2490":{"n":"HOLESHOT","v":false,"t":"num","m":0.05},"2510":{"n":"HOPKINS","v":false,"t":"num","m":0.05},"2511":{"n":"HOPPE","v":false,"t":"none","nda":1},"2515":{"n":"HORNET","v":false,"t":"none","nda":1},"2520":{"n":"HOT CAMS","v":true,"t":"num","m":0.1},"2535":{"n":"HOT PRODUCTS","v":false,"t":"num","m":0.03},"2540":{"n":"HOT RODS","v":true,"t":"num","m":0.1},"2517":{"n":"HOTBODIES","v":false,"t":"num","m":0.05},"2583":{"n":"HYGEAR","v":false,"t":"num","m":0.03},"2584":{"n":"IBEXX","v":false,"t":"none","nda":1},"2587":{"n":"IDEAL","v":false,"t":"none","nda":1},"2588":{"n":"IGRIP","v":false,"t":"num","m":0.05},"2610":{"n":"IMS","v":false,"t":"num","m":0.05},"2170":{"n":"INNOVATIONS","v":false,"t":"num","m":0.05},"2650":{"n":"IRC","v":false,"t":"prog","p":"Tire Program"},"2660":{"n":"ISC","v":false,"t":"num","m":0.05},"2670":{"n":"ITP","v":false,"t":"prog","p":"Tire Program"},"2705":{"n":"JAGG","v":false,"t":"num","m":0.03},"2710":{"n":"JAMES GASKETS","v":false,"t":"none","nda":1},"2760":{"n":"JT","v":false,"t":"none","nda":1},"2763":{"n":"JUSTSAIL","v":false,"t":"num","m":0.05},"2695":{"n":"JW SPEAKER","v":false,"t":"none","nda":1},"2770":{"n":"K&L","v":false,"t":"num","m":0.05,"x":"No discounts on direct ship items"},"2780":{"n":"K&N","v":false,"t":"num","m":0.08},"2790":{"n":"K&S","v":false,"t":"num","m":0.05},"2765":{"n":"K100","v":false,"t":"chem","m":0.08,"x":"No discounts on drums"},"2825":{"n":"KB PISTONS","v":false,"t":"none","nda":1},"2840":{"n":"KELCH","v":false,"t":"num","m":0.05},"2845":{"n":"KENDA","v":false,"t":"prog","p":"Tire Program"},"2846":{"n":"KENS FACTORY","v":false,"t":"none","nda":1},"2850":{"n":"KFI","v":false,"t":"split"},"2870":{"n":"KIDDE","v":false,"t":"none","nda":1},"2900":{"n":"KLEER VU","v":false,"t":"num","m":0.05},"2903":{"n":"KLOTZ","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"2904":{"n":"KLUBER","v":false,"t":"num","m":0.05},"2910":{"n":"KOLD KUTTER","v":false,"t":"none","nda":1},"2920":{"n":"KOLPIN","v":false,"t":"num","m":0.05,"x":"No discounts on roofs and windshields"},"2930":{"n":"KORONIS","v":false,"t":"none","nda":1},"2940":{"n":"KOSO","v":false,"t":"num","m":0.05},"2860":{"n":"KPMI","v":false,"t":"none","nda":1},"2950":{"n":"KREEM","v":false,"t":"num","m":0.05},"2955":{"n":"KRUZER KADDY","v":false,"t":"none","nda":1},"2960":{"n":"KRYPTONITE","v":false,"t":"num","m":0.05},"2980":{"n":"KWIK TEK","v":false,"t":"num","m":0.05},"2990":{"n":"KYB","v":false,"t":"num","m":0.05},"3035":{"n":"LECTRONS LLC","v":false,"t":"none","nda":1},"3037":{"n":"LETRIC LIGHTING CO","v":false,"t":"num","m":0.03},"3075":{"n":"LINDBY","v":false,"t":"num","m":0.03},"3090":{"n":"LIQUID PERFORMANCE","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"3105":{"n":"LOCK AND LOAD","v":false,"t":"none","nda":1},"3110":{"n":"LUCAS","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"3125":{"n":"LYNDALL BRAKES","v":false,"t":"none","nda":1},"3160":{"n":"MAGURA","v":false,"t":"num","m":0.03},"3170":{"n":"MAIER","v":false,"t":"none","nda":1},"3184":{"n":"MAMMUT","v":false,"t":"none","nda":1},"3220":{"n":"MAXIMA","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"3230":{"n":"MAXXIS","v":false,"t":"prog","p":"Tire Program"},"3233":{"n":"MBRP","v":false,"t":"num","m":0.03},"3275":{"n":"METRO VAC","v":false,"t":"none","nda":1},"3280":{"n":"MICHELIN","v":false,"t":"prog","p":"Tire Program","x":"SEE PROGRAM / 17% Tubes"},"3300":{"n":"MIDWEST CAN","v":false,"t":"none","nda":1},"3310":{"n":"MIGHTY MINI","v":false,"t":"none","nda":1},"3315":{"n":"MIKA METALS","v":false,"t":"num","m":0.05},"3320":{"n":"MIKUNI","v":false,"t":"num","m":0.05},"3340":{"n":"MODQUAD","v":false,"t":"none","nda":1},"3350":{"n":"MONKEY GRIP","v":false,"t":"num","m":0.05},"3370":{"n":"MOROSO","v":false,"t":"num","m":0.03},"3400":{"n":"MOTION PRO","v":false,"t":"num","m":0.05},"3420":{"n":"MOTO HOSE","v":false,"t":"none","nda":1},"3430":{"n":"MOTO TASSINARI","v":false,"t":"num","m":0.05},"3415":{"n":"MOTOBATT","v":false,"t":"batt","m":0.08},"3460":{"n":"MOTO-GATE","v":false,"t":"none","nda":1},"3465":{"n":"MOTOREX","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"3485":{"n":"MOTOZORB","v":false,"t":"num","m":0.05},"3490":{"n":"MOTUL","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"3560":{"n":"NAMURA","v":false,"t":"num","m":0.1},"3599":{"n":"NAMZ CUSTOM CYCLE","v":false,"t":"none","nda":1},"3570":{"n":"NATIONAL CYCLE","v":false,"t":"none","nda":1},"3595":{"n":"NELSON-RIGG","v":false,"t":"num","m":0.05},"3607":{"n":"NEW RAGE CYCLES","v":false,"t":"none","nda":1},"3605":{"n":"NEW-RAY","v":false,"t":"num","m":0.08},"3620":{"n":"NGK","v":false,"t":"num","m":0.1},"3630":{"n":"NO TOIL","v":false,"t":"num","m":0.05},"3640":{"n":"NOCO GENIUS","v":false,"t":"num","m":0.05},"3660":{"n":"NORREC","v":false,"t":"num","m":0.05},"3683":{"n":"NTN","v":false,"t":"num","m":0.05},"3700":{"n":"ODI","v":false,"t":"num","m":0.08},"3718":{"n":"OLD STF","v":false,"t":"num","m":0.05},"3725":{"n":"ONE EMBLEMS","v":false,"t":"num","m":0.05},"3723":{"n":"ONGUARD","v":false,"t":"num","m":0.05},"3740":{"n":"OPEN TRAIL","t":"split","v":false},"3785":{"n":"OTTP","v":false,"t":"num","m":0.05},"3780":{"n":"OUTERWEARS","v":false,"t":"none","nda":1},"3765":{"n":"OXBOW GEAR LLC","v":false,"t":"num","m":0.05},"3787":{"n":"P3","v":false,"t":"none","nda":1},"3792":{"n":"PARTS COMPANY INC","v":false,"t":"num","m":0.05},"3793":{"n":"PATHFINDER","v":false,"t":"num","m":0.05},"3800":{"n":"PBI","v":false,"t":"num","m":0.05},"3810":{"n":"PCRACING","v":false,"t":"none","nda":1},"4140":{"n":"PDP","v":false,"t":"num","m":0.05},"3825":{"n":"PERFORMANCE TOOL","v":false,"t":"none","nda":1},"3830":{"n":"PERMATEX","v":false,"t":"num","m":0.05},"3845":{"n":"PHOENIX","v":false,"t":"num","m":0.05},"3850":{"n":"PIAA","v":true,"t":"num","m":0.08},"3860":{"n":"PIG SPIT","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"3865":{"n":"PINGEL ENT","v":false,"t":"none","nda":1},"3880":{"n":"PIVOT PEGZ","v":false,"t":"num","m":0.05},"3890":{"n":"PIVOT WORKS","v":true,"t":"num","m":0.1},"3900":{"n":"PJ1","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"3950":{"n":"POD","v":false,"t":"num","m":0.05},"3960":{"n":"POLISPORT","v":false,"t":"num","m":0.05},"191":{"n":"POWERBUILT","v":false,"t":"num","m":0.05},"3980":{"n":"POWERMADD","v":false,"t":"num","m":0.05},"3990":{"n":"POWERTYE","v":false,"t":"num","m":0.05},"3995":{"n":"PPD","v":false,"t":"num","m":0.05},"4000":{"n":"PREC. BILLET","v":false,"t":"none","nda":1},"4010":{"n":"PRO ARMOR","v":false,"t":"num","m":0.03},"4015":{"n":"PRO CIRCUIT","v":false,"t":"none","nda":1},"4095":{"n":"PRO FILTER","v":false,"t":"num","m":0.05},"4053":{"n":"PRO ONE","v":false,"t":"none","nda":1},"4055":{"n":"PRO PAD","v":false,"t":"num","m":0.05},"4115":{"n":"PROK","v":false,"t":"num","m":0.05},"4160":{"n":"PROX","v":false,"t":"num","m":0.05},"4170":{"n":"PSR","v":false,"t":"num","m":0.05},"4175":{"n":"PSYCHIC","v":false,"t":"num","m":0.05},"4180":{"n":"PUIG","v":false,"t":"none","nda":1},"4200":{"n":"QUAD WORKS","v":false,"t":"num","m":0.05},"4205":{"n":"QUANTUM","v":false,"t":"num","m":0.05},"2220":{"n":"QUICK STRAP","v":false,"t":"num","m":0.05},"4230":{"n":"R&D","v":false,"t":"none","nda":1},"4270":{"n":"RACE TECH","v":false,"t":"num","m":0.03},"4280":{"n":"RACELINE","v":false,"t":"prog","p":"Tire Program"},"4288":{"n":"RACING BROTHERS","v":false,"t":"none","nda":1},"4290":{"n":"RAM","v":false,"t":"num","m":0.05},"4310":{"n":"RAPTOR","v":false,"t":"none","nda":1},"4340":{"n":"RATIO RITE","v":false,"t":"num","m":0.05},"4351":{"n":"RED BULL","v":true,"t":"none","nda":1},"4353":{"n":"RED LINE","v":false,"t":"chem","m":0.13,"x":"No discounts on drums"},"4354":{"n":"REKLUSE RACING","v":true,"t":"split"},"4356":{"n":"REMA TIP TOP","v":false,"t":"num","m":0.05},"4363":{"n":"REVARC","v":false,"t":"num","m":0.05},"6113":{"n":"RFX","v":false,"t":"num","m":0.05},"4380":{"n":"RICKS","v":false,"t":"num","m":0.05},"4400":{"n":"RIDE-ON","v":false,"t":"num","m":0.05},"4430":{"n":"RIGID","v":false,"t":"num","m":0.05},"4440":{"n":"RISK RACING","v":false,"t":"none","nda":1},"4443":{"n":"RIVA","v":false,"t":"none","nda":1},"4445":{"n":"RIVAL POWERSPORTS USA","v":false,"t":"num","m":0.05},"4447":{"n":"RIZOMA","v":false,"t":"none","nda":1},"4450":{"n":"RK EXCEL","v":false,"t":"num","m":0.05},"6107":{"n":"RM STATOR","v":false,"t":"num","m":0.05},"4452":{"n":"ROCKER LOCKERS","v":false,"t":"num","m":0.05},"4455":{"n":"ROCKET PERFORMANCE","v":false,"t":"none","nda":1},"4490":{"n":"ROTOPAX","v":false,"t":"num","m":0.08},"4510":{"n":"ROX","v":false,"t":"num","m":0.05},"4515":{"n":"RSI","v":false,"t":"num","m":0.05},"4516":{"n":"RST","v":false,"t":"prog","p":"Apparel Program"},"4520":{"n":"RULE","v":false,"t":"num","m":0.05},"4550":{"n":"RYDER CLIPS","v":false,"t":"none","nda":1},"4565":{"n":"S&S OFFROAD","v":false,"t":"none","nda":1},"4570":{"n":"S100","v":false,"t":"chem","m":0.08,"x":"No discounts on drums"},"4590":{"n":"SAFETY","v":false,"t":"num","m":0.05},"4592":{"n":"SANTORO FABWORX","v":true,"t":"none","nda":1},"4595":{"n":"SAWICKI","v":false,"t":"none","nda":1},"4618":{"n":"SCORPION EXO","v":false,"t":"prog","p":"Apparel Program"},"4620":{"n":"SCOTT","v":false,"t":"num","m":0.08},"4640":{"n":"SDC","v":false,"t":"none","nda":1},"4670":{"n":"SEIZMIK","v":false,"t":"num","m":0.05},"4675":{"n":"SENA","v":true,"t":"num","m":0.05,"x":"See cheat sheet for items excluded from max discount"},"4680":{"n":"SHINDY","v":false,"t":"num","m":0.05},"4690":{"n":"SHINKO","v":false,"t":"prog","p":"Tire Program","x":"SEE PROGRAM - NO DISCOUNTS ON 005 & 009"},"6114":{"n":"SHOCK SOX","v":false,"t":"num","m":NaN},"4710":{"n":"SHOGUN","v":false,"t":"num","m":0.05},"4678":{"n":"SKF","v":false,"t":"num","m":0.08},"4770":{"n":"SLIME","v":false,"t":"num","m":0.05},"4780":{"n":"SLIPSTREAMER","v":false,"t":"num","m":0.05},"5080":{"n":"SLP","v":false,"t":"prog","p":"Brand program only"},"4790":{"n":"SLYDOG","v":false,"t":"num","m":0.05},"5050":{"n":"SMP","v":false,"t":"num","m":0.05},"4840":{"n":"SNOBUNJE","v":false,"t":"num","m":0.03},"4860":{"n":"SNOSTUFF","v":false,"t":"num","m":0.05},"4890":{"n":"SOLAS","v":false,"t":"num","m":0.05},"4892":{"n":"SP CONNECT","v":false,"t":"num","m":0.03},"4893":{"n":"SP1","v":false,"t":"num","m":0.18},"4900":{"n":"SPECTRO","v":true,"t":"chem","m":0.1,"x":"No discounts on drums"},"4950":{"n":"SPEEDWERX","v":false,"t":"none","nda":1},"4750":{"n":"SPG","v":false,"t":"num","m":0.05},"4965":{"n":"SPIKE","v":false,"t":"num","m":0.05},"4970":{"n":"SPORTECH","v":false,"t":"none","nda":1},"4990":{"n":"SPORTSTUFF","v":false,"t":"num","m":0.05},"5005":{"n":"SPYKE","v":false,"t":"none","nda":1},"5015":{"n":"SSI","v":false,"t":"none","nda":1},"5010":{"n":"SSV WORKS","v":false,"t":"none","nda":1},"5020":{"n":"STA-BIL","v":false,"t":"num","m":0.05},"5030":{"n":"STACOOL","v":false,"t":"num","m":0.08},"5070":{"n":"STAR BRITE","v":false,"t":"chem","m":0.08,"x":"No discounts on drums"},"5095":{"n":"STKR","v":false,"t":"none","nda":1},"5110":{"n":"STOMPGRIP","v":false,"t":"num","m":0.05},"3202":{"n":"STOP & GO","v":false,"t":"num","m":0.05},"5120":{"n":"STRAIGHTLINE","v":false,"t":"prog","p":"Brand program only"},"5130":{"n":"STREAMLINE","v":false,"t":"num","m":0.05},"5145":{"n":"STRIDER","v":false,"t":"none","nda":1},"5150":{"n":"STUD BOY","v":false,"t":"num","m":0.12},"5170":{"n":"SUDCO","v":false,"t":"none","nda":1},"5210":{"n":"SUNSTAR","v":false,"t":"num","m":0.05},"5240":{"n":"SUPERCADDY","v":false,"t":"none","nda":1},"5250":{"n":"SUPERCLAMP","v":false,"t":"none","nda":1},"5265":{"n":"SUPERSPROX","v":false,"t":"num","m":0.1},"5320":{"n":"SYMTEC","v":false,"t":"none","nda":1},"3626":{"n":"SYSTEM 3","v":false,"t":"prog","p":"Tire Program"},"6117":{"n":"TACK STRAP","v":false,"t":"num","m":0.05},"5597":{"n":"TAMER","v":false,"t":"none","nda":1},"5400":{"n":"TECHMOUNT","v":false,"t":"none","nda":1},"5430":{"n":"TEKVEST","v":false,"t":"num","m":0.05},"5435":{"n":"TEXA","v":false,"t":"none","nda":1},"5460":{"n":"THREEBOND","v":false,"t":"none","nda":1},"5466":{"n":"TIGER LIGHTS","v":true,"t":"num","m":0.1},"5550":{"n":"TRAIL TECH","v":false,"t":"num","m":0.03},"5625":{"n":"TTS","v":false,"t":"none","nda":1},"5630":{"n":"TUBLISS","v":false,"t":"num","m":0.05},"5640":{"n":"TUFF JUG","v":false,"t":"num","m":0.05},"5670":{"n":"TWIN AIR","v":true,"t":"num","m":0.05},"5690":{"n":"UCLEAR","v":true,"t":"num","m":0.05},"950":{"n":"ULTIMAX","v":false,"t":"num","m":0.08},"5694":{"n":"ULTRACOOL","v":false,"t":"none","nda":1},"5693":{"n":"ULTRAGARD","v":false,"t":"none","nda":1},"5720":{"n":"UNABIKER","v":false,"t":"num","m":0.05},"5730":{"n":"UNI","v":false,"t":"num","m":0.05},"5733":{"n":"UNIT","v":false,"t":"none","nda":1},"5740":{"n":"UPP","v":false,"t":"num","m":0.05},"5745":{"n":"USWE","v":false,"t":"num","m":0.05},"5390":{"n":"VENOM PRODUCTS","v":false,"t":"num","m":0.05},"5770":{"n":"VERTEX","v":true,"t":"num","m":0.1},"5790":{"n":"VISU-FILTER","v":false,"t":"num","m":0.05},"5800":{"n":"VOODOO","v":false,"t":"num","m":0.03},"5810":{"n":"VORTEX","v":false,"t":"num","m":0.05},"5795":{"n":"VP RACING","v":false,"t":"chem","m":0.08,"x":"No discounts on drums"},"5850":{"n":"WAHL BROS","v":false,"t":"none","nda":1},"5870":{"n":"WARN","v":false,"t":"split"},"991":{"n":"WILCOX","v":false,"t":"num","m":0.05},"5925":{"n":"WILD 1","v":false,"t":"none","nda":1},"5926":{"n":"WILD ASS","v":false,"t":"none","x":"See Buy in program","nda":1},"5930":{"n":"WILLIE & MAX","v":false,"t":"num","m":0.05},"5950":{"n":"WISECO","v":false,"t":"num","m":0.05},"5960":{"n":"WIZARDS","v":false,"t":"chem","m":0.08,"x":"No discounts on drums"},"5970":{"n":"WOODYS","v":false,"t":"num","m":0.12},"5980":{"n":"WORKS","v":false,"t":"none","nda":1},"6000":{"n":"WORX","v":false,"t":"none","nda":1},"5890":{"n":"WPS","v":false,"t":"none","nda":1},"6010":{"n":"WSM","v":false,"t":"num","m":0.05},"6030":{"n":"XENA","v":false,"t":"num","m":0.03},"6035":{"n":"XK GLOW","v":false,"t":"none","nda":1},"6051":{"n":"XTC POWER PRODUCTS","v":false,"t":"none","nda":1},"6045":{"n":"XTRA SEAL","v":false,"t":"none","nda":1},"6050":{"n":"XTRIG","v":false,"t":"none","nda":1},"6077":{"n":"YOSHIMURA","v":true,"t":"none","nda":1},"6080":{"n":"YUASA","v":false,"t":"batt","m":0.18},"6090":{"n":"ZAN","v":false,"t":"num","m":0.05},"6093":{"n":"ZBROZ","v":false,"t":"num","m":0.05},"6094":{"n":"ZEE LINE","v":false,"t":"num","m":0.05},"6100":{"n":"ZETA","v":false,"t":"num","m":0.05},"6110":{"n":"ZTECHNIK","v":false,"t":"none"}};
+const TIERS=[.03,.05,.07,.10,.12];
+const LV=[4,12,24,48,60,250];
+const TIRE={
+ '4660':{n:'SEDONA',r:[{m:/wheel/i,l:'Wheels',v:[.07,.09,.11,.13,.13,.14]},{m:/tube/i,l:'Tubes',v:[.12,.13,.14,.15,.16,.17]},{l:'Tires',v:[.10,.11,.13,.15,.16,.18]}]},
+ '4690':{n:'SHINKO',r:[{l:'Tires',v:[.12,.13,.15,.16,.17,.19],x:'Excludes 005 & 009'}]},
+ '3626':{n:'SYSTEM 3',r:[{l:'Tires & wheels',v:[.10,.11,.13,.137,.137,.14]}]},
+ '555':{n:'BFGOODRICH',r:[{l:'Tires',v:[.20,.21,.21,.22,.23,.23]}]},
+ '6112':{n:'BRIDGESTONE',r:[{l:'Tires',v:[.19,.20,.21,.23,.25,.25]}]},
+ '1125':{n:'CARLISLE',r:[{l:'Tires',v:[.05,.06,.07,.07,.07,.07]}]},
+ '1571':{n:'DUNLOP',r:[{l:'Tires',v:[.29,.30,.31,.32,.34,.35],x:'Excludes the models listed on the flyer'}]},
+ '2165':{n:'GBC',r:[{l:'Tires',v:[.08,.10,.12,.13,.14,.16]}]},
+ '2670':{n:'ITP',r:[{l:'Tires, wheels & wheel kits',v:[.05,.06,.07,.07,.07,.07]}]},
+ '2650':{n:'IRC',r:[{l:'Tires',v:[.08,.09,.10,.10,.11,.11]}]},
+ '3230':{n:'MAXXIS',r:[{l:'Tires',v:[.10,.11,.12,.13,.13,.13]}]},
+ '3280':{n:'MICHELIN',r:[{l:'Tires',v:[.14,.15,.16,.17,.19,.21],x:'Excludes Tweel kit'}]},
+ '4280':{n:'RACELINE',r:[{l:'Wheels',v:[.03,.05,.07,.07,.07,.09]}]}
+};
+const WHEELKIT=[.08,.10,.13,.13,.13,.13];
+function tireRow(code,desc,lock){
+  const b=TIRE[code];if(!b)return null;
+  if(/wheel kit/i.test(desc||''))return {l:'Wheel kits',v:WHEELKIT};
+  let row=b.r.find(r=>r.m&&r.m.test(desc||''));
+  if(!row&&b.r.length>1&&!desc){ // brand-wide lock: use the row whose ladder holds their %
+    row=b.r.find(r=>r.v.some(v=>Math.abs(v-lock)<1e-9));
+  }
+  return row||b.r[b.r.length-1];
+}
+function levelAt(v,row){let i=-1;row.v.forEach((x,j)=>{if(v+1e-9>=x)i=j;});return i;}
+
+const SCALE=.25;
+const pct=v=>(Math.round(v*1000)/10).toString().replace(/\.0$/,'')+'%';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s).toUpperCase().replace(/[^A-Z0-9]/g,'');
+const byName={};for(const k in BR)byName[norm(BR[k].n)]=k;
+
+// ---- work out the max for one lock-in line ----
+function resolve(code,name,div,desc,lock){
+  let b=BR[code];
+  if(!b){const k=byName[norm(name)];if(k){code=k;b=BR[k];}}
+  if(TIRE[code]){
+    const row=tireRow(code,desc,lock||0);
+    return {t:'tire',nda:false,vend:false,m:row.v[row.v.length-1],seg:row.l+' (tire buy-in program)',v:row.v,note:row.x||''};
+  }
+  if(!b) return {t:'unk',why:'Not on the max discount list'};
+  const d=desc||''; const L={nda:!!b.nda,vend:!!b.v,note:b.x||''};
+  if(b.nda) return {...L,t:'none',why:'No Discount Allowed brand'};
+  if(b.t==='split'){
+    if(code==='1875'){
+      if(/lithium/i.test(d)) return {...L,t:'batt',m:.10,seg:'Lithium batteries'};
+      if(div===114||/batter|electrolyte|lead acid/i.test(d)) return {...L,t:'batt',m:.23,seg:'Batteries (battery program top tier)'};
+      if(div===110) return {...L,t:'chem',m:.13,seg:'Chemicals (chem program top tier)'};
+      return {...L,t:'num',m:.05,seg:div?'All other':'All other (brand-wide lock, max varies by category)'};
+    }
+    if(code==='2310'){
+      if(div===114) return {...L,t:'batt',m:.18,seg:'Batteries (battery program top tier)'};
+      if(div===110) return {...L,t:'chem',m:.13,seg:'Chemicals (chem program top tier)'};
+      return {...L,t:'num',m:.05,seg:'All other'};
+    }
+    if(code==='3740'){
+      if(div===141||!div) return {...L,t:'prog',why:'Plow & winch program'};
+      return {...L,t:'num',m:.05,seg:'All other',note:'None on cab kits, heaters, wipers'};
+    }
+    if(code==='4354'){
+      if(div===110) return {...L,t:'chem',m:.08,seg:'Oil (chem program top tier)'};
+      return {...L,t:'none',why:'No discounts on clutches'};
+    }
+    // KFI, WARN
+    if(div===141||!div) return {...L,t:'prog',why:'Plow & winch program (or 2%)'};
+    return {...L,t:'num',m:.02,seg:'Outside plow & winch'};
+  }
+  if(b.t==='none') return {...L,t:'none',why:'No discounts allowed'};
+  if(b.t==='prog') return {...L,t:'prog',why:b.p||'Brand program'};
+  if(b.t==='unk') return {...L,t:'unk',why:'No max listed'};
+  if(b.t==='chem'){
+    if(div&&div!==110) return {...L,t:'unk',why:'Chem program covers chemicals only. Ask your ASM about this category.'};
+    return {...L,t:'chem',m:b.m,seg:'Chem program top tier'};
+  }
+  if(b.t==='batt') return {...L,t:'batt',m:b.m,seg:'Battery program top tier'};
+  return {...L,t:'num',m:b.m};
+}
+
+// ---- parse the pasted portal text ----
+const DATE=/\b(\d{4}\/\d{1,2}\/\d{1,2}|\d{1,2}\/\d{1,2}\/\d{2,4})\b/;
+function parse(text){
+  const rows=[];let dealer='';
+  for(let raw of text.split(/\r?\n/)){
+    const line=raw.replace(/\u00a0/g,' ').trim();
+    if(!line) continue;
+    const dm=line.match(/^(\d{4,7})\s*-\s*([^\t]+?)\s*$/);
+    if(dm&&!DATE.test(line)){dealer=dm[1]+' - '+dm[2];continue;}
+    if(!/^\d{1,5}\s*:/.test(line)) continue;
+    const dt=line.search(DATE);
+    const head=(dt>0?line.slice(0,dt):line);
+    const tail=line.slice(dt>0?dt:0);
+    const dm2=tail.match(/(\d*\.\d+|\d+(?:\.\d+)?)\s*%?\s*$/);
+    if(!dm2) continue;
+    let disc=parseFloat(dm2[1]); if(disc>1) disc=disc/100;
+    // split the head into "code: text" pieces
+    const re=/(\d{1,5})\s*:\s*/g;let m,marks=[];
+    while((m=re.exec(head))) marks.push({i:m.index,e:re.lastIndex,c:m[1]});
+    const segs=marks.map((mk,j)=>({c:mk.c,t:head.slice(mk.e,j+1<marks.length?marks[j+1].i:head.length).replace(/\t+/g,' ').trim()}));
+    if(!segs.length) continue;
+    const brand=segs[0]; let div=null;const rest=[];
+    segs.slice(1).forEach((s,j)=>{const n=+s.c; if(j===0&&n>=100&&n<1000){div=n;rest.push(s.t);} else rest.push(s.t);});
+    rows.push({code:brand.c,name:brand.t,div,desc:rest.filter(Boolean).join(' > '),lock:disc});
+  }
+  return {dealer,rows};
+}
+
+// ---- classify ----
+function classify(r){
+  const x=resolve(r.code,r.name,r.div,r.desc,r.lock);
+  const o={...r,...x};
+  o.brand=(BR[r.code]&&BR[r.code].n)||(TIRE[r.code]&&TIRE[r.code].n)||r.name;
+  if(['none','prog','unk'].includes(x.t)){o.flag=x.t==='none'?'excl':x.t==='prog'?'prog':'unk';return o;}
+  o.room=Math.round((x.m-r.lock)*1000)/1000;
+  o.tier=0;TIERS.forEach((t,i)=>{if(o.room+1e-9>=t)o.tier=i+1;});
+  o.flag=o.room< -0.0005?'over':o.tier>=2?'go':o.tier===1?'t1':'none';
+  return o;
+}
+const FLAGS={
+  go:{h:'Room to pitch',p:'At least 5% left under the max.',c:'go'},
+  t1:{h:'Tier 1 only',p:'3% to 5% left. Pick 3 can only add the 3% tier here.',c:'warn'},
+  none:{h:'No room',p:'Under 3% left, so Pick 3 has nothing to add.',c:'stop'},
+  over:{h:'Above the listed max',p:'Lock-in is higher than the max list allows. Could be an approved exception. Not a Pick 3 brand.',c:'stop'},
+  prog:{h:'Program brand, ask your ASM',p:'Runs on its own apparel, tire or plow program.',c:'prog'},
+  excl:{h:'Excluded',p:'No Discount Allowed brands are out of Pick 3.',c:'off'},
+  unk:{h:'Check manually',p:'The max list does not give a clear number for these.',c:'off'}
+};
+const ORDER=['go','t1','none','over','prog','excl','unk'];
+
+function group(rows){
+  const g={};
+  rows.forEach(r=>{const k=[r.code,r.seg||'',r.lock,r.flag].join('|');(g[k]=g[k]||{...r,n:0,descs:[]}).n++;if(r.desc)g[k].descs.push(r.desc);});
+  return Object.values(g).sort((a,b)=>(b.room??-9)-(a.room??-9)||a.brand.localeCompare(b.brand));
+}
+
+function gauge(o){
+  if(o.m==null) return '';
+  const S=Math.max(SCALE,(o.m||0)+.03,(o.lock||0)+.03);
+  const w=v=>Math.max(0,Math.min(1,v/S))*100;
+  let h='<div class="gauge" aria-hidden="true">';
+  h+=`<div class="lk" style="width:${w(Math.min(o.lock,o.m))}%"></div>`;
+  if(o.room>0) h+=`<div class="rm" style="left:${w(o.lock)}%;width:${w(o.room)}%"></div>`;
+  if(o.room<0) h+=`<div class="ov" style="left:${w(o.m)}%;width:${w(-o.room)}%"></div>`;
+  TIERS.forEach(t=>{const x=o.lock+t;if(x<=S)h+=`<div class="tk" style="left:${w(x)}%"></div>`;});
+  h+=`<div class="cap" style="left:calc(${w(o.m)}% - 1px)"></div></div>`;
+  h+=`<div class="gtext">Locked ${pct(o.lock)}, max ${pct(o.m)}${o.seg?' ('+esc(o.seg)+')':''}</div>`;
+  return h;
+}
+
+function levels(o){
+  const cur=levelAt(o.lock,{v:o.v});
+  let h='<div class="lvs">'+o.v.map((v,i)=>`<span class="lv${i===cur?' now':''}">${LV[i]}<b>${pct(v)}</b></span>`).join('')+'</div>';
+  const steps=[];
+  TIERS.forEach((t,i)=>{
+    const val=o.lock+t; if(val>o.m+1e-9) return;
+    const l=levelAt(val,{v:o.v});
+    if(l>cur) steps.push(`Tier ${i+1} (+${pct(t)}) puts them at ${pct(val)}, the ${LV[l]}-unit level`);
+  });
+  const seen=new Set();const uniq=steps.filter(s=>{const k=s.split('the ')[1];if(seen.has(k))return false;seen.add(k);return true;});
+  h+=`<div class="gtext">${cur<0?`Locked ${pct(o.lock)}, under the 4-unit level.`:`Locked ${pct(o.lock)}, the ${LV[cur]}-unit level.`} ${uniq.length?uniq.join('. ')+'.':'Pick 3 does not reach the next level here.'}</div>`;
+  return h;
+}
+function itemHTML(o){
+  const f=FLAGS[o.flag];
+  let chips='';
+  if(o.t==='tire') chips+=`<span class="chip" style="background:var(--prog-bg);color:var(--prog)">Tire buy-in program</span>`;
+  if(o.t==='chem'||o.t==='batt') chips+=`<span class="chip" style="background:var(--prog-bg);color:var(--prog)">Program tiers</span>`;
+  if(o.vend) chips+=`<span class="chip" style="background:var(--off-bg);color:var(--muted)">Vendor max</span>`;
+  if(o.note) chips+=`<span class="chip" style="background:var(--warn-bg);color:var(--warn)">${esc(o.note)}</span>`;
+  const where=o.descs&&o.descs.length?(o.n>1?`${o.n} categories, e.g. ${esc(o.descs[0])}`:esc(o.descs[0])):(o.n>1?`${o.n} lines`:'Whole brand');
+  let res;
+  if(o.room!=null){
+    res=o.room<0?`<b style="color:var(--stop)">${pct(-o.room)} over</b><span>above max</span>`
+      :`<b style="color:var(--${f.c==='go'?'go':f.c==='warn'?'warn':'stop'})">${pct(o.room)} left</b><span>${o.tier?'up to Tier '+o.tier+' ('+pct(TIERS[o.tier-1])+')':'no Pick 3'}</span>`;
+  } else res=`<b style="color:var(--${f.c})">${pct(o.lock)}</b><span>${esc(o.why||'')}</span>`;
+  const lv=o.v?levels(o):'';
+  return `<div class="item"><div class="nm">${esc(o.brand)}<div class="sub">${where}</div>${chips}</div><div class="g">${gauge(o)}${lv}</div><div class="res">${res}</div></div>`;
+}
+function render(dealer,items){
+  const cnt={};items.forEach(i=>cnt[i.flag]=(cnt[i.flag]||0)+1);
+  const brandsGo=[...new Set(items.filter(i=>i.flag==='go').map(i=>i.brand))];
+  let h=`<div class="dealer-head"><h2>${esc(dealer||'Dealer')}</h2><button class="btn ghost" id="copyOne">Copy for Excel</button></div>`;
+  h+=`<p class="hint" style="margin:0">${brandsGo.length?`Best Pick 3 candidates from the lock-ins: <b>${brandsGo.map(esc).join(', ')}</b>. Fill the rest with brands they buy that have no lock-in (use Brand lookup).`:'No locked-in brand has 5% or more of room. Build the Pick 3 from brands they buy that have no lock-in (use Brand lookup).'}</p>`;
+  h+='<div class="counts">'+ORDER.filter(k=>cnt[k]).map(k=>`<span class="count" style="background:var(--${FLAGS[k].c}-bg);color:var(--${FLAGS[k].c})">${FLAGS[k].h}: ${cnt[k]}</span>`).join('')+'</div>';
+  ORDER.forEach(k=>{
+    const list=items.filter(i=>i.flag===k); if(!list.length) return;
+    const f=FLAGS[k];
+    h+=`<div class="sect"><h3><i style="background:var(--${f.c})"></i>${f.h}</h3><p>${f.p}</p>${list.map(itemHTML).join('')}</div>`;
+  });
+  h+=`<p class="hint" style="margin-top:18px">Bar key: grey is the current lock-in, green is room left, the dark line is the max, and small ticks show where each Pick 3 tier would land.</p>`;
+  return h;
+}
+
+// ---- storage ----
+const KEY='pick3-dealers-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}}
+function save(db){try{localStorage.setItem(KEY,JSON.stringify(db));return true}catch(e){return false}}
+
+function tsvRows(dealer,items){
+  return items.map(o=>[dealer,o.brand,o.code,o.descs&&o.descs.length?o.descs.join('; '):'Whole brand',pct(o.lock),o.m!=null?pct(o.m):'',o.room!=null?pct(o.room):'',o.tier?('Tier '+o.tier):'',FLAGS[o.flag].h,o.why||o.seg||''].join('\t'));
+}
+const TSVHEAD=['Dealer','Brand','Code','Categories','Lock-in','Max','Room','Max Pick 3 tier','Flag','Notes'].join('\t');
+async function copy(text,el){
+  try{await navigator.clipboard.writeText(text);flash(el,'Copied. Paste into Excel.',true);}
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
+    let ok=false;try{ok=document.execCommand('copy')}catch(_){}
+    ta.remove();flash(el,ok?'Copied. Paste into Excel.':'Copy was blocked by the browser.',ok);
+  }
+}
+function flash(el,t,ok){el.textContent=t;el.className='msg'+(ok?' ok':'');el.style.display='block';setTimeout(()=>el.style.display='none',3500);}
+
+// ---- check tab ----
+let current=null;
+const $=id=>document.getElementById(id);
+$('go').onclick=()=>{
+  const {dealer,rows}=parse($('paste').value);
+  if(!rows.length){flash($('msg'),'No lock-in lines found. Paste the text from the portal Lock-Ins page (Copy to Clipboard); each line should start with a brand code like "170: ALL BALLS".',false);$('out').innerHTML='';return;}
+  if(dealer&&!$('dname').value.trim()) $('dname').value=dealer;
+  const name=$('dname').value.trim()||dealer||'Unnamed dealer';
+  const items=group(rows.map(classify));
+  current={name,items};
+  $('out').innerHTML=render(name,items);
+  $('copyOne').onclick=()=>copy(TSVHEAD+'\n'+tsvRows(name,items).join('\n'),$('msg'));
+  const db=load();db[name]={at:new Date().toISOString(),items};
+  const ok=save(db);
+  flash($('msg'),ok?`Checked ${rows.length} lock-in lines and saved to Territory.`:`Checked ${rows.length} lock-in lines. Couldn't save to this device.`,true);
+};
+$('clear').onclick=()=>{$('paste').value='';$('dname').value='';$('out').innerHTML='';current=null;$('paste').focus();};
+
+// ---- territory tab ----
+function renderTerr(){
+  const db=load();const names=Object.keys(db).sort();
+  if(!names.length){$('terr').innerHTML='<p class="empty">No dealers yet. Check a dealer and it shows up here.</p>';return;}
+  let h='<table><thead><tr><th>Dealer</th><th>Room to pitch</th><th>Tier 1 only</th><th>Maxed or over</th><th></th></tr></thead><tbody>';
+  names.forEach(n=>{
+    const it=db[n].items;
+    const go=it.filter(i=>i.flag==='go').map(i=>`${esc(i.brand)} <span style="color:var(--go)">${pct(i.room)}</span>`);
+    const t1=[...new Set(it.filter(i=>i.flag==='t1').map(i=>esc(i.brand)))];
+    const mx=new Set(it.filter(i=>i.flag==='none'||i.flag==='over').map(i=>i.brand)).size;
+    h+=`<tr><td><b>${esc(n)}</b><div class="sub" style="color:var(--muted);font-size:.8rem">${new Date(db[n].at).toLocaleDateString()}</div></td><td>${go.join('<br>')||'<span style="color:var(--muted)">None</span>'}</td><td>${t1.join(', ')||'-'}</td><td>${mx}</td><td><button class="btn ghost" data-del="${esc(n)}" style="padding:6px 10px;min-height:36px">Remove</button></td></tr>`;
+  });
+  $('terr').innerHTML=h+'</tbody></table>';
+  $('terr').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const db=load();delete db[b.dataset.del];save(db);renderTerr();});
+}
+$('copyAll').onclick=()=>{const db=load();const lines=[TSVHEAD];Object.keys(db).sort().forEach(n=>lines.push(...tsvRows(n,db[n].items)));copy(lines.join('\n'),$('tmsg'));};
+$('wipe').onclick=()=>{if(confirm('Remove every saved dealer from this device?')){save({});renderTerr();}};
+
+// ---- lookup tab ----
+function lookup(q){
+  q=q.trim();if(!q){$('lres').innerHTML='';return;}
+  const nq=norm(q);
+  const hits=Object.entries(BR).filter(([k,b])=>k===q||norm(b.n).includes(nq)).slice(0,25);
+  if(!hits.length){$('lres').innerHTML='<p class="empty">No brand matches that. Try part of the name or the brand code.</p>';return;}
+  const extra={'1875':['Fire Power batteries',.23],'2310':['HardDrive batteries',.18]};
+  $('lres').innerHTML=hits.map(([k,b])=>{
+    let o;
+    if(b.t==='split'&&extra[k]) o=classify({code:k,name:b.n,div:114,desc:'Batteries',lock:0});
+    else o=classify({code:k,name:b.n,div:null,desc:'',lock:0});
+    o.n=1;o.descs=['With no lock-in'];o.brand=b.n+'  ('+k+')';
+    return itemHTML(o);
+  }).join('');
+}
+$('q').addEventListener('input',e=>lookup(e.target.value));
+
+// ---- tabs ----
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='t-'+b.dataset.t));
+  if(b.dataset.t==='terr') renderTerr();
+});
+</script>
+</body>
+</html>

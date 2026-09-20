@@ -286,7 +286,9 @@ function parseSales(text){
       brand=(first<0?toks:toks.slice(0,first)).join(' ').trim();
       if(first>-1){
         const v=money(toks[first]);
-        s26=(v>last+0.01)?0:v;   // list runs high to low; a jump up means the 26 column was blank
+        const later=toks.slice(first+1).filter(t=>MONEY.test(t)).map(money);
+        const only25=later.some(x=>Math.abs(x+v)<0.01);   // a row whose variance is minus this number had no 26 sales
+        s26=(only25||v>last+0.01)?0:v;   // list runs high to low; a jump up means the 26 column was blank
       }
     }
     if(!brand) continue;

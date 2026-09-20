@@ -102,6 +102,8 @@ th{font-size:.8rem;color:var(--muted);font-weight:600}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 <header><div class="wrap">
@@ -126,6 +128,7 @@ th{font-size:.8rem;color:var(--muted);font-weight:600}
     <textarea id="sales" placeholder="Optional. The box above takes brand sales just as well."></textarea>
     <div class="row" style="margin-top:8px">
       <button class="btn ghost" id="pasteBtn">Paste from clipboard</button>
+      <label class="btn ghost" for="file" style="display:inline-block;margin:0">Open a file<input type="file" id="file" accept=".csv,.txt,.xls,.xlsx,.pdf" style="display:none"></label>
       <div style="flex:1 1 100%"></div>
       <div><label for="dname">Dealer (filled in from the paste if found)</label><input type="text" id="dname" placeholder="e.g. 930186 - Brenny's M/C Clinic"></div>
       <div style="flex:0 0 auto;display:flex;gap:8px">
@@ -458,6 +461,60 @@ $('pasteBtn').onclick=async()=>{
     const box=$('paste');box.value=(box.value.trim()?box.value.replace(/\s+$/,'')+'\n':'')+t;
     flash($('msg'),'Pasted. Add the other page too, or tap Check lock-ins.',true);
   }catch(e){flash($('msg'),'The browser blocked reading the clipboard. Tap inside the box and paste by hand.',false);}
+};
+
+
+async function pdfText(buf){
+  const L=window.pdfjsLib; L.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const doc=await L.getDocument({data:buf}).promise; const out=[];
+  for(let p=1;p<=doc.numPages;p++){
+    const c=await (await doc.getPage(p)).getTextContent();
+    const lines={};
+    c.items.forEach(it=>{const y=Math.round(it.transform[5]);(lines[y]=lines[y]||[]).push({x:it.transform[4],s:it.str});});
+    Object.keys(lines).map(Number).sort((a,b)=>b-a).forEach(y=>{
+      out.push(lines[y].sort((a,b)=>a.x-b.x).map(i=>i.s).join(' ').replace(/\s+/g,' ').trim());
+    });
+  }
+  return out.join('\n');
+}
+function csvToTabs(t){
+  return t.split(/\r?\n/).map(line=>{
+    const out=[];let cur='',q=false;
+    for(let i=0;i<line.length;i++){const c=line[i];
+      if(c==='"'){ if(q&&line[i+1]==='"'){cur+='"';i++;} else q=!q; }
+      else if(c===','&&!q){out.push(cur);cur='';}
+      else cur+=c;}
+    out.push(cur);return out.join('\t');
+  }).join('\n');
+}
+function addText(t,note){
+  const box=$('paste');box.value=(box.value.trim()?box.value.replace(/\s+$/,'')+'\n':'')+t;
+  flash($('msg'),note||'Loaded. Tap Check lock-ins.',true);
+}
+$('file').onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  const xl=/\.xlsx?$/i.test(f.name), pdf=/\.pdf$/i.test(f.name);
+  rd.onerror=()=>flash($('msg'),"That file couldn't be read. Try saving it as CSV.",false);
+  rd.onload=()=>{
+    try{
+      if(pdf){
+        if(typeof window.pdfjsLib==='undefined'){flash($('msg'),'The PDF reader did not load. Check your connection and try again.',false);return;}
+        pdfText(new Uint8Array(rd.result)).then(t=>addText(t,`Loaded ${f.name}. Tap Check lock-ins.`))
+          .catch(()=>flash($('msg'),"That PDF couldn't be read.",false));
+      }else if(xl){
+        if(typeof XLSX==='undefined'){flash($('msg'),'The spreadsheet reader did not load. Try a CSV instead.',false);return;}
+        const wb=XLSX.read(rd.result,{type:'array'});
+        const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''});
+        addText(rows.map(r=>r.join('\t')).join('\n'),`Loaded ${f.name}. Tap Check lock-ins.`);
+      }else{
+        const t=String(rd.result);
+        addText(/,/.test(t)&&!/\t/.test(t)?csvToTabs(t):t,`Loaded ${f.name}. Tap Check lock-ins.`);
+      }
+    }catch(err){flash($('msg'),"That file couldn't be read. Try saving it as CSV.",false);}
+    e.target.value='';
+  };
+  (xl||pdf)?rd.readAsArrayBuffer(f):rd.readAsText(f);
 };
 $('clear').onclick=()=>{$('paste').value='';$('sales').value='';$('dname').value='';$('out').innerHTML='';current=null;$('paste').focus();};
 

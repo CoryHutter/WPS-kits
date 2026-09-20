@@ -122,6 +122,8 @@ th{font-size:.8rem;color:var(--muted);font-weight:600}
   <section class="tab on" id="t-check">
     <label for="paste">Paste the dealer's lock-ins</label>
     <textarea id="paste" placeholder="In the sales portal, open the dealer's Lock-Ins page, tap Copy to Clipboard, then paste here."></textarea>
+    <label for="sales" style="margin-top:14px">Paste the dealer's brand sales (optional)</label>
+    <textarea id="sales" placeholder="From the Dealer Brand Sales page. This adds the brands they buy that have no lock-in at all."></textarea>
     <div class="row">
       <div><label for="dname">Dealer (filled in from the paste if found)</label><input type="text" id="dname" placeholder="e.g. 930186 - Brenny's M/C Clinic"></div>
       <div style="flex:0 0 auto;display:flex;gap:8px">
@@ -150,7 +152,7 @@ th{font-size:.8rem;color:var(--muted);font-weight:600}
     <div id="lres" class="lk-res"></div>
   </section>
 </div>
-<p class="hint">Tire brands use the 2026 Tire Buy-In Program ladder; the unit counts are tire quantities and 24 or more adds dating terms. Other max discounts come from the WPS max discount list (5/26/2026 file). The portal lock-in page is a summary and may not show every lock-in, so confirm on the full list before quoting. Rule 4 still applies: check with your ASM and BMS.</p>
+<p class="hint">Tire brands use the 2026 Tire Buy-In Program ladder; the unit counts are tire quantities and 24 or more adds dating terms. Other max discounts come from the WPS max discount list (5/26/2026 file). The portal lock-in page is a summary and may not show every lock-in, so confirm on the full list before quoting.</p>
 </main>
 
 <script>
@@ -229,7 +231,7 @@ function resolve(code,name,div,desc,lock){
   if(b.t==='prog') return {...L,t:'prog',why:b.p||'Brand program'};
   if(b.t==='unk') return {...L,t:'unk',why:'No max listed'};
   if(b.t==='chem'){
-    if(div&&div!==110) return {...L,t:'unk',why:'Chem program covers chemicals only. Ask your ASM about this category.'};
+    if(div&&div!==110) return {...L,t:'unk',why:'Chem program covers chemicals only, so this category has no listed max.'};
     return {...L,t:'chem',m:b.m,seg:'Chem program top tier'};
   }
   if(b.t==='batt') return {...L,t:'batt',m:b.m,seg:'Battery program top tier'};
@@ -264,6 +266,36 @@ function parse(text){
   return {dealer,rows};
 }
 
+
+const MONEY=/^\(?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})\)?$/;
+const money=t=>{if(!t)return 0;const n=parseFloat(String(t).replace(/[,$\s]/g,'').replace(/^\((.*)\)$/,'-$1'));return isNaN(n)?0:n;};
+function parseSales(text){
+  const out={};let last=Infinity;
+  for(const raw of text.split(/\r?\n/)){
+    const line=raw.replace(/\u00a0/g,' ').replace(/\s+$/,'');
+    if(!/Items/i.test(line)) continue;
+    let brand='',s26=0;
+    if(line.indexOf('\t')>-1){
+      const c=line.split('\t').map(x=>x.trim());
+      const i=c.findIndex(x=>/^items$/i.test(x)); if(i<0||!c[i+1]) continue;
+      brand=c[i+1]; s26=money(c[i+2]);
+    }else{
+      const m=line.match(/^\s*\d+\s+Items\s+(.*)$/i); if(!m) continue;
+      const toks=m[1].trim().split(/\s+/);
+      const first=toks.findIndex(t=>MONEY.test(t));
+      brand=(first<0?toks:toks.slice(0,first)).join(' ').trim();
+      if(first>-1){
+        const v=money(toks[first]);
+        s26=(v>last+0.01)?0:v;   // list runs high to low; a jump up means the 26 column was blank
+      }
+    }
+    if(!brand) continue;
+    if(s26>0) last=s26;
+    const k=norm(brand);
+    if(!out[k]||out[k].s<s26) out[k]={name:brand,s:s26};
+  }
+  return out;
+}
 // ---- classify ----
 function classify(r){
   const x=resolve(r.code,r.name,r.div,r.desc,r.lock);
@@ -276,16 +308,34 @@ function classify(r){
   return o;
 }
 const FLAGS={
+  open:{h:'No lock-in, full room',p:'They buy these but have no discount, so Pick 3 has the whole max to work with. Sorted by this year\'s sales.',c:'go'},
   go:{h:'Room to pitch',p:'At least 5% left under the max.',c:'go'},
   t1:{h:'Tier 1 only',p:'3% to 5% left. Pick 3 can only add the 3% tier here.',c:'warn'},
   none:{h:'No room',p:'Under 3% left, so Pick 3 has nothing to add.',c:'stop'},
   over:{h:'Above the listed max',p:'Lock-in is higher than the max list allows. Could be an approved exception. Not a Pick 3 brand.',c:'stop'},
-  prog:{h:'Program brand, ask your ASM',p:'Runs on its own apparel, tire or plow program.',c:'prog'},
+  prog:{h:'Program brand',p:'Runs on its own apparel or plow & winch program, not on a straight max discount.',c:'prog'},
   excl:{h:'Excluded',p:'No Discount Allowed brands are out of Pick 3.',c:'off'},
   unk:{h:'Check manually',p:'The max list does not give a clear number for these.',c:'off'}
 };
-const ORDER=['go','t1','none','over','prog','excl','unk'];
+const ORDER=['open','go','t1','none','over','prog','excl','unk'];
 
+
+const nameIndex={};for(const k in BR)nameIndex[norm(BR[k].n)]=k;for(const k in TIRE)nameIndex[norm(TIRE[k].n)]=k;
+function openItems(sales,locked){
+  const items=[],skip=[];
+  for(const k in sales){
+    if(locked.has(k)) continue;
+    const code=nameIndex[k]; if(!code) {skip.push(sales[k].name);continue;}
+    if(sales[k].s<=0) continue;
+    const o=classify({code,name:sales[k].name,div:null,desc:'',lock:0});
+    o.sales=sales[k].s; o.n=1; o.descs=['No lock-in'];
+    if(o.room==null){ if(o.sales>=500) items.push(o); else skip.push(sales[k].name); continue; }
+    if(o.room<=0){skip.push(sales[k].name);continue;}
+    o.flag='open'; items.push(o);
+  }
+  items.sort((a,b)=>b.sales-a.sales);
+  return {items,skip};
+}
 function group(rows){
   const g={};
   rows.forEach(r=>{const k=[r.code,r.seg||'',r.lock,r.flag].join('|');(g[k]=g[k]||{...r,n:0,descs:[]}).n++;if(r.desc)g[k].descs.push(r.desc);});
@@ -326,6 +376,7 @@ function itemHTML(o){
   if(o.t==='chem'||o.t==='batt') chips+=`<span class="chip" style="background:var(--prog-bg);color:var(--prog)">Program tiers</span>`;
   if(o.vend) chips+=`<span class="chip" style="background:var(--off-bg);color:var(--muted)">Vendor max</span>`;
   if(o.note) chips+=`<span class="chip" style="background:var(--warn-bg);color:var(--warn)">${esc(o.note)}</span>`;
+  const sale=o.sales?`<span style="color:var(--muted)"> · $${Math.round(o.sales).toLocaleString()} this year</span>`:'';
   const where=o.descs&&o.descs.length?(o.n>1?`${o.n} categories, e.g. ${esc(o.descs[0])}`:esc(o.descs[0])):(o.n>1?`${o.n} lines`:'Whole brand');
   let res;
   if(o.room!=null){
@@ -333,13 +384,18 @@ function itemHTML(o){
       :`<b style="color:var(--${f.c==='go'?'go':f.c==='warn'?'warn':'stop'})">${pct(o.room)} left</b><span>${o.tier?'up to Tier '+o.tier+' ('+pct(TIERS[o.tier-1])+')':'no Pick 3'}</span>`;
   } else res=`<b style="color:var(--${f.c})">${pct(o.lock)}</b><span>${esc(o.why||'')}</span>`;
   const lv=o.v?levels(o):'';
-  return `<div class="item"><div class="nm">${esc(o.brand)}<div class="sub">${where}</div>${chips}</div><div class="g">${gauge(o)}${lv}</div><div class="res">${res}</div></div>`;
+  return `<div class="item"><div class="nm">${esc(o.brand)}<div class="sub">${where}${sale}</div>${chips}</div><div class="g">${gauge(o)}${lv}</div><div class="res">${res}</div></div>`;
 }
 function render(dealer,items){
   const cnt={};items.forEach(i=>cnt[i.flag]=(cnt[i.flag]||0)+1);
+  const cand=items.filter(i=>(i.flag==='go'||i.flag==='open')&&i.tier>=2)
+    .sort((a,b)=>(b.sales||0)-(a.sales||0)||b.tier-a.tier);
+  const seen=new Set();const top=[];
+  cand.forEach(i=>{if(!seen.has(i.brand)&&top.length<3){seen.add(i.brand);top.push(i);}});
   const brandsGo=[...new Set(items.filter(i=>i.flag==='go').map(i=>i.brand))];
   let h=`<div class="dealer-head"><h2>${esc(dealer||'Dealer')}</h2><button class="btn ghost" id="copyOne">Copy for Excel</button></div>`;
-  h+=`<p class="hint" style="margin:0">${brandsGo.length?`Best Pick 3 candidates from the lock-ins: <b>${brandsGo.map(esc).join(', ')}</b>. Fill the rest with brands they buy that have no lock-in (use Brand lookup).`:'No locked-in brand has 5% or more of room. Build the Pick 3 from brands they buy that have no lock-in (use Brand lookup).'}</p>`;
+  if(top.length===3) h+=`<p class="hint" style="margin:0;font-size:1rem">Suggested Pick 3: <b>${top.map(i=>esc(i.brand)+' (up to Tier '+i.tier+')').join(', ')}</b></p>`;
+  else h+=`<p class="hint" style="margin:0">${brandsGo.length?`Best Pick 3 candidates from the lock-ins: <b>${brandsGo.map(esc).join(', ')}</b>. Fill the rest with brands they buy that have no lock-in (use Brand lookup).`:'No locked-in brand has 5% or more of room. Build the Pick 3 from brands they buy that have no lock-in (use Brand lookup).'}</p>`;
   h+='<div class="counts">'+ORDER.filter(k=>cnt[k]).map(k=>`<span class="count" style="background:var(--${FLAGS[k].c}-bg);color:var(--${FLAGS[k].c})">${FLAGS[k].h}: ${cnt[k]}</span>`).join('')+'</div>';
   ORDER.forEach(k=>{
     const list=items.filter(i=>i.flag===k); if(!list.length) return;
@@ -356,9 +412,9 @@ function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){
 function save(db){try{localStorage.setItem(KEY,JSON.stringify(db));return true}catch(e){return false}}
 
 function tsvRows(dealer,items){
-  return items.map(o=>[dealer,o.brand,o.code,o.descs&&o.descs.length?o.descs.join('; '):'Whole brand',pct(o.lock),o.m!=null?pct(o.m):'',o.room!=null?pct(o.room):'',o.tier?('Tier '+o.tier):'',FLAGS[o.flag].h,o.why||o.seg||''].join('\t'));
+  return items.map(o=>[dealer,o.brand,o.code,o.sales?Math.round(o.sales):'',o.descs&&o.descs.length?o.descs.join('; '):'Whole brand',pct(o.lock),o.m!=null?pct(o.m):'',o.room!=null?pct(o.room):'',o.tier?('Tier '+o.tier):'',FLAGS[o.flag].h,o.why||o.seg||''].join('\t'));
 }
-const TSVHEAD=['Dealer','Brand','Code','Categories','Lock-in','Max','Room','Max Pick 3 tier','Flag','Notes'].join('\t');
+const TSVHEAD=['Dealer','Brand','Code','Sales this year','Categories','Lock-in','Max','Room','Max Pick 3 tier','Flag','Notes'].join('\t');
 async function copy(text,el){
   try{await navigator.clipboard.writeText(text);flash(el,'Copied. Paste into Excel.',true);}
   catch(e){
@@ -377,15 +433,20 @@ $('go').onclick=()=>{
   if(!rows.length){flash($('msg'),'No lock-in lines found. Paste the text from the portal Lock-Ins page (Copy to Clipboard); each line should start with a brand code like "170: ALL BALLS".',false);$('out').innerHTML='';return;}
   if(dealer&&!$('dname').value.trim()) $('dname').value=dealer;
   const name=$('dname').value.trim()||dealer||'Unnamed dealer';
-  const items=group(rows.map(classify));
+  let items=group(rows.map(classify));
+  const locked=new Set(items.map(i=>norm(i.brand)).concat(rows.map(r=>norm(r.name))));
+  const sTxt=$('sales').value.trim();let skipped=[];
+  if(sTxt){const sales=parseSales(sTxt);
+    items.forEach(i=>{const s=sales[norm(i.brand)];if(s)i.sales=s.s;});
+    const op=openItems(sales,locked);skipped=op.skip;items=items.concat(op.items);}
   current={name,items};
   $('out').innerHTML=render(name,items);
   $('copyOne').onclick=()=>copy(TSVHEAD+'\n'+tsvRows(name,items).join('\n'),$('msg'));
   const db=load();db[name]={at:new Date().toISOString(),items};
   const ok=save(db);
-  flash($('msg'),ok?`Checked ${rows.length} lock-in lines and saved to Territory.`:`Checked ${rows.length} lock-in lines. Couldn't save to this device.`,true);
+  flash($('msg'),`Checked ${rows.length} lock-in lines${sTxt?' plus brand sales':''}.${ok?' Saved to Territory.':" Couldn't save to this device."}`,true);
 };
-$('clear').onclick=()=>{$('paste').value='';$('dname').value='';$('out').innerHTML='';current=null;$('paste').focus();};
+$('clear').onclick=()=>{$('paste').value='';$('sales').value='';$('dname').value='';$('out').innerHTML='';current=null;$('paste').focus();};
 
 // ---- territory tab ----
 function renderTerr(){

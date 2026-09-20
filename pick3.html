@@ -120,11 +120,13 @@ th{font-size:.8rem;color:var(--muted);font-weight:600}
 <main>
 <div class="panel">
   <section class="tab on" id="t-check">
-    <label for="paste">Paste the dealer's lock-ins</label>
-    <textarea id="paste" placeholder="In the sales portal, open the dealer's Lock-Ins page, tap Copy to Clipboard, then paste here."></textarea>
-    <label for="sales" style="margin-top:14px">Paste the dealer's brand sales (optional)</label>
-    <textarea id="sales" placeholder="From the Dealer Brand Sales page. This adds the brands they buy that have no lock-in at all."></textarea>
-    <div class="row">
+    <label for="paste">Paste the dealer's lock-ins, brand sales, or both</label>
+    <textarea id="paste" placeholder="Paste the Lock-Ins page here. You can paste the Dealer Brand Sales report into this same box too, one after the other."></textarea>
+    <label for="sales" style="margin-top:14px">Brand sales (optional, only if you want them in a separate box)</label>
+    <textarea id="sales" placeholder="Optional. The box above takes brand sales just as well."></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ghost" id="pasteBtn">Paste from clipboard</button>
+      <div style="flex:1 1 100%"></div>
       <div><label for="dname">Dealer (filled in from the paste if found)</label><input type="text" id="dname" placeholder="e.g. 930186 - Brenny's M/C Clinic"></div>
       <div style="flex:0 0 auto;display:flex;gap:8px">
         <button class="btn" id="go">Check lock-ins</button>
@@ -431,13 +433,14 @@ function flash(el,t,ok){el.textContent=t;el.className='msg'+(ok?' ok':'');el.sty
 let current=null;
 const $=id=>document.getElementById(id);
 $('go').onclick=()=>{
-  const {dealer,rows}=parse($('paste').value);
+  const bothTxt=$('paste').value+'\n'+$('sales').value;
+  const {dealer,rows}=parse(bothTxt);
   if(!rows.length){flash($('msg'),'No lock-in lines found. Paste the text from the portal Lock-Ins page (Copy to Clipboard); each line should start with a brand code like "170: ALL BALLS".',false);$('out').innerHTML='';return;}
   if(dealer&&!$('dname').value.trim()) $('dname').value=dealer;
   const name=$('dname').value.trim()||dealer||'Unnamed dealer';
   let items=group(rows.map(classify));
   const locked=new Set(items.map(i=>norm(i.brand)).concat(rows.map(r=>norm(r.name))));
-  const sTxt=$('sales').value.trim();let skipped=[];
+  const sTxt=bothTxt.trim();let skipped=[];
   if(sTxt){const sales=parseSales(sTxt);
     items.forEach(i=>{const s=sales[norm(i.brand)];if(s)i.sales=s.s;});
     const op=openItems(sales,locked);skipped=op.skip;items=items.concat(op.items);}
@@ -447,6 +450,14 @@ $('go').onclick=()=>{
   const db=load();db[name]={at:new Date().toISOString(),items};
   const ok=save(db);
   flash($('msg'),`Checked ${rows.length} lock-in lines${sTxt?' plus brand sales':''}.${ok?' Saved to Territory.':" Couldn't save to this device."}`,true);
+};
+$('pasteBtn').onclick=async()=>{
+  try{
+    const t=await navigator.clipboard.readText();
+    if(!t.trim()){flash($('msg'),'The clipboard is empty. Copy from the portal page first.',false);return;}
+    const box=$('paste');box.value=(box.value.trim()?box.value.replace(/\s+$/,'')+'\n':'')+t;
+    flash($('msg'),'Pasted. Add the other page too, or tap Check lock-ins.',true);
+  }catch(e){flash($('msg'),'The browser blocked reading the clipboard. Tap inside the box and paste by hand.',false);}
 };
 $('clear').onclick=()=>{$('paste').value='';$('sales').value='';$('dname').value='';$('out').innerHTML='';current=null;$('paste').focus();};
 

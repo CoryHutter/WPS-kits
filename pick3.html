@@ -84,6 +84,31 @@ textarea{min-height:130px;resize:vertical}
 .gauge .tk{position:absolute;top:0;height:7px;width:1px;background:var(--ink);opacity:.45}
 .gtext{font-size:.78rem;color:var(--muted);margin-top:3px}
 
+
+.dlr-only{display:none}
+.printhead{display:none}
+@media print{
+  @page{margin:12mm}
+  header,nav,.hint,#paste,#sales,label,.row,.msg,.counts,.gauge,.gtext,#copyOne,#printRep,#printDlr{display:none!important}
+  body{background:#fff;color:#000;font-size:11pt}
+  .panel{border:none;padding:0}
+  .printhead{display:block;border-bottom:2px solid #123a8a;margin-bottom:10px;padding-bottom:6px}
+  .printhead h2{margin:0;font-size:18pt;color:#123a8a}
+  .printhead p{margin:2px 0 0;font-size:10pt}
+  .dlr-head-line{display:none}
+  body.dealercopy .dlr-head-line{display:block!important;font-size:11pt;margin-top:6px!important}
+  .ptiers{display:table;width:100%;border-collapse:collapse;margin:8px 0 14px}
+  .ptiers span{display:table-cell;border:1px solid #999;padding:4px 6px;text-align:center;font-size:9.5pt}
+  .item{break-inside:avoid;page-break-inside:avoid}
+  .dealer-head h2{display:none}
+}
+body.dealercopy .sect[data-f="none"],body.dealercopy .sect[data-f="over"],body.dealercopy .sect[data-f="unk"],body.dealercopy .sect[data-f="excl"],body.dealercopy .sect[data-f="prog"]{display:none}
+@media print{
+  body.dealercopy .lvs,body.dealercopy .chip,body.dealercopy .res b:first-child,body.dealercopy .res span,body.dealercopy .sect>p,body.dealercopy .item .sub{display:none}
+  body.dealercopy .sect h3,body.dealercopy .sect>p{display:none}
+  body.dealercopy .dlr-only{display:block;font-family:"Barlow Condensed",sans-serif;font-size:1.3rem}
+  body.dealercopy .sect h3{font-size:13pt}
+}
 .lvs{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
 .lv{font-size:.7rem;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:2px 6px;text-align:center;line-height:1.2}
 .lv b{display:block;font-size:.8rem;color:var(--ink)}
@@ -391,7 +416,7 @@ function itemHTML(o){
       :`<b style="color:var(--${f.c==='go'?'go':f.c==='warn'?'warn':'stop'})">${pct(o.room)} left</b><span>${o.tier?'up to Tier '+o.tier+' ('+pct(TIERS[o.tier-1])+')':'no Pick 3'}</span>`;
   } else res=`<b style="color:var(--${f.c})">${pct(o.lock)}</b><span>${esc(o.why||'')}</span>`;
   const lv=o.v?levels(o):'';
-  return `<div class="item"><div class="nm">${esc(o.brand)}<div class="sub">${where}${sale}</div>${chips}</div><div class="g">${gauge(o)}${lv}</div><div class="res">${res}</div></div>`;
+  return `<div class="item"><div class="nm">${esc(o.brand)}<div class="sub">${where}${sale}</div>${chips}</div><div class="g">${gauge(o)}${lv}</div><div class="res">${res}<b class="dlr-only" style="color:var(--go)">${o.tier?'up to '+pct(TIERS[o.tier-1])+' off':''}</b></div></div>`;
 }
 function render(dealer,items){
   const cnt={};items.forEach(i=>cnt[i.flag]=(cnt[i.flag]||0)+1);
@@ -400,14 +425,17 @@ function render(dealer,items){
   const seen=new Set();const top=[];
   cand.forEach(i=>{if(!seen.has(i.brand)&&top.length<3){seen.add(i.brand);top.push(i);}});
   const brandsGo=[...new Set(items.filter(i=>i.flag==='go').map(i=>i.brand))];
-  let h=`<div class="dealer-head"><h2>${esc(dealer||'Dealer')}</h2><button class="btn ghost" id="copyOne">Copy for Excel</button></div>`;
-  if(top.length===3) h+=`<p class="hint" style="margin:0;font-size:1rem">Suggested Pick 3: <b>${top.map(i=>esc(i.brand)+' (up to Tier '+i.tier+')').join(', ')}</b></p>`;
+  let h=`<div class="printhead"><h2>${esc(dealer||'Dealer')}</h2><p>WPS End of Q3 Pick 3 &mdash; September 21-30, 2026. Pick any 3 brands, $500 minimum each. Your discount goes up with the combined total:</p><div class="ptiers"><span>$1,500+<br><b>3%</b></span><span>$4,500+<br><b>5%</b></span><span>$7,500+<br><b>7%</b></span><span>$10,500+<br><b>10%</b></span><span>$13,500+<br><b>12%</b></span></div><p class="dlr-head-line" style="margin:0"><b>Brands you can use for Pick 3</b><span id="phSug"></span></p></div><div class="dealer-head"><h2>${esc(dealer||'Dealer')}</h2><span><button class="btn ghost" id="copyOne">Copy for Excel</button> <button class="btn ghost" id="printRep">Print my copy</button> <button class="btn" id="printDlr">Dealer handout</button></span></div>`;
+  if(top.length===3){
+    h+=`<p class="hint" style="margin:0;font-size:1rem">Suggested Pick 3: <b>${top.map(i=>esc(i.brand)+' (up to Tier '+i.tier+')').join(', ')}</b></p>`;
+    h=h.replace('<span id="phSug"></span>',', starting with '+esc(top.map(i=>i.brand).join(', '))+'.');
+  }
   else h+=`<p class="hint" style="margin:0">${brandsGo.length?`Best Pick 3 candidates from the lock-ins: <b>${brandsGo.map(esc).join(', ')}</b>. Fill the rest with brands they buy that have no lock-in (use Brand lookup).`:'No locked-in brand has 5% or more of room. Build the Pick 3 from brands they buy that have no lock-in (use Brand lookup).'}</p>`;
   h+='<div class="counts">'+ORDER.filter(k=>cnt[k]).map(k=>`<span class="count" style="background:var(--${FLAGS[k].c}-bg);color:var(--${FLAGS[k].c})">${FLAGS[k].h}: ${cnt[k]}</span>`).join('')+'</div>';
   ORDER.forEach(k=>{
     const list=items.filter(i=>i.flag===k); if(!list.length) return;
     const f=FLAGS[k];
-    h+=`<div class="sect"><h3><i style="background:var(--${f.c})"></i>${f.h}</h3><p>${f.p}</p>${list.map(itemHTML).join('')}</div>`;
+    h+=`<div class="sect" data-f="${k}"><h3><i style="background:var(--${f.c})"></i>${f.h}</h3><p>${f.p}</p>${list.map(itemHTML).join('')}</div>`;
   });
   h+=`<p class="hint" style="margin-top:18px">Bar key: grey is the current lock-in, green is room left, the dark line is the max, and small ticks show where each Pick 3 tier would land.</p>`;
   return h;
@@ -449,11 +477,14 @@ $('go').onclick=()=>{
     const op=openItems(sales,locked);skipped=op.skip;items=items.concat(op.items);}
   current={name,items};
   $('out').innerHTML=render(name,items);
+  $('printRep').onclick=()=>doPrint(false);
+  $('printDlr').onclick=()=>doPrint(true);
   $('copyOne').onclick=()=>copy(TSVHEAD+'\n'+tsvRows(name,items).join('\n'),$('msg'));
   const db=load();db[name]={at:new Date().toISOString(),items};
   const ok=save(db);
   flash($('msg'),`Checked ${rows.length} lock-in lines${sTxt?' plus brand sales':''}.${ok?' Saved to Territory.':" Couldn't save to this device."}`,true);
 };
+function doPrint(dealerCopy){document.body.classList.toggle('dealercopy',!!dealerCopy);setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove('dealercopy'),500);},50);}
 $('pasteBtn').onclick=async()=>{
   try{
     const t=await navigator.clipboard.readText();

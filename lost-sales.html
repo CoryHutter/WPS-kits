@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lost Sales Recorder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one counter screen — big record button on top, today's lost-sales ticket below; settings tucked in a drawer */
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --ink:#18222e; --muted:#5d6b7a; --line:#d5dbe2;
+  --rec:#d23a2c; --rec-soft:#fbe4e1; --ok:#2f7a4f; --ok-soft:#e1f1e7; --warn:#a86a00; --warn-soft:#f8ecd2;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#12181f; --panel:#1b232c; --ink:#e7ecf1; --muted:#97a4b2; --line:#2c3743;
+  --rec:#f0584a; --rec-soft:#3a1e1b; --ok:#5fbf86; --ok-soft:#1a3125; --warn:#e3a43a; --warn-soft:#382b14;
+  color-scheme:dark;}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:860px;margin:0 auto;display:grid;gap:20px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font:700 30px/1 var(--display);letter-spacing:.02em;text-transform:uppercase;margin:0}
+h1 small{display:block;font:500 13px/1.4 var(--body);letter-spacing:0;text-transform:none;color:var(--muted);margin-top:4px}
+h2{font:700 20px/1.1 var(--display);text-transform:uppercase;letter-spacing:.04em;margin:0}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--rec);outline-offset:2px}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 14px}
+.ghost:hover{border-color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+
+/* record */
+.counter{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+@media (max-width:640px){.counter{grid-template-columns:1fr;justify-items:center;text-align:center}}
+#recBtn{width:180px;height:180px;border-radius:50%;border:8px solid var(--rec-soft);background:var(--rec);color:#fff;
+  display:grid;place-items:center;font:700 26px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;transition:transform .15s}
+#recBtn:active{transform:scale(.97)}
+#recBtn.on{animation:pulse 1.6s infinite}
+#recBtn .dot{width:22px;height:22px;border-radius:50%;background:#fff;margin:0 auto 10px}
+#recBtn.on .dot{border-radius:4px}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--rec-soft)}70%{box-shadow:0 0 0 22px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){#recBtn.on{animation:none}}
+.status{font:600 18px/1.3 var(--body);margin:0 0 6px}
+.timer{font:500 15px var(--mono);color:var(--muted)}
+.consent{font-size:13px;color:var(--muted);margin:10px 0 0}
+#live{margin-top:14px;min-height:70px;max-height:160px;overflow:auto;font:14px/1.5 var(--mono);color:var(--muted);
+  background:var(--bg);border-radius:8px;padding:10px 12px;text-align:left;white-space:pre-wrap}
+.typed{display:grid;gap:8px;margin-top:14px}
+.typed textarea{width:100%;min-height:60px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--panel);color:var(--ink);font:14px var(--body)}
+.typed button{justify-self:start}
+
+/* results */
+.result{border-left:4px solid var(--line);padding:10px 14px;border-radius:0 8px 8px 0;background:var(--bg);display:grid;gap:4px}
+.result.walked{border-color:var(--rec)} .result.ordered{border-color:var(--warn)} .result.sold{border-color:var(--ok)}
+.chip{display:inline-block;font:600 11px/1 var(--body);text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;border-radius:999px}
+.chip.walked{background:var(--rec-soft);color:var(--rec)} .chip.ordered{background:var(--warn-soft);color:var(--warn)} .chip.sold{background:var(--ok-soft);color:var(--ok)}
+.chip.pending{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.item{font-weight:600}
+.meta{font-size:13px;color:var(--muted)}
+
+/* report */
+.reportHead{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.reportHead input{font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--panel);color:var(--ink)}
+.tally{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.tally div{background:var(--bg);border-radius:8px;padding:10px 12px}
+.tally b{display:block;font:700 30px/1 var(--display);font-variant-numeric:tabular-nums}
+.tally span{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:600 11px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n{font:500 14px var(--mono);text-align:right;width:3em}
+.tbl{overflow-x:auto}
+.empty{color:var(--muted);padding:12px 0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.solid{background:var(--ink);color:var(--panel);border:0;border-radius:8px;padding:9px 16px;font-weight:600}
+#reportText{width:100%;min-height:140px;margin-top:10px;font:13px var(--mono);border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg);color:var(--ink)}
+
+/* settings */
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);max-width:min(520px,calc(100vw - 32px));padding:22px}
+dialog::backdrop{background:rgba(10,15,20,.5)}
+dialog label{display:grid;gap:4px;font-weight:600;font-size:14px;margin-bottom:14px}
+dialog input{font:14px var(--body);border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--bg);color:var(--ink)}
+dialog p{font-size:13px;color:var(--muted);margin:0 0 14px}
+.warnbox{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span id="storeName">Lost Sales Recorder</span><small>Tap before every customer. Tap again when they leave.</small></h1>
+  <button class="ghost" id="setBtn">Settings</button>
+</header>
+
+<section class="panel">
+  <div class="counter">
+    <button id="recBtn" aria-pressed="false"><span><span class="dot"></span><span id="recLabel">Record</span></span></button>
+    <div style="min-width:0;width:100%">
+      <p class="status" id="status">Ready for the next customer</p>
+      <div class="timer" id="timer">00:00</div>
+      <p class="consent">Keep the "conversations may be recorded" sign visible at the counter.</p>
+      <div id="live" aria-live="polite">The conversation will appear here as it's heard.</div>
+      <div class="typed">
+        <textarea id="typed" placeholder="No mic? Type what the customer asked for, e.g. &quot;Wanted a plow for a Honda Foreman, didn't have it, didn't want to order.&quot;"></textarea>
+        <button class="ghost" id="typedBtn">Log it</button>
+      </div>
+    </div>
+  </div>
+  <div id="lastResult" style="margin-top:18px;display:grid;gap:8px"></div>
+</section>
+
+<section class="panel">
+  <div class="reportHead">
+    <h2>Lost sales report</h2>
+    <input type="date" id="day" aria-label="Report day">
+  </div>
+  <div class="tally">
+    <div><b id="tWalk">0</b><span>Walked</span></div>
+    <div><b id="tOrder">0</b><span>Ordered</span></div>
+    <div><b id="tConv">0</b><span>Conversations</span></div>
+  </div>
+  <h2 style="font-size:16px;margin-bottom:6px">Walked out without it</h2>
+  <div class="tbl"><table><thead><tr><th>Item</th><th>Fits</th><th>Time</th></tr></thead><tbody id="walkRows"></tbody></table></div>
+  <h2 style="font-size:16px;margin:18px 0 6px">Asked for more than once (last 30 days)</h2>
+  <div class="tbl"><table><thead><tr><th>Item</th><th style="text-align:right">Asks</th></tr></thead><tbody id="repeatRows"></tbody></table></div>
+  <div class="actions">
+    <button class="solid" id="copyBtn">Copy report</button>
+    <button class="ghost" id="csvBtn">Download spreadsheet (CSV)</button>
+  </div>
+  <textarea id="reportText" readonly aria-label="Report text"></textarea>
+</section>
+
+</div>
+
+<dialog id="settings">
+  <h2 style="margin-bottom:14px">Settings</h2>
+  <label>Store name<input id="sName" placeholder="e.g. Fox Valley Powersports"></label>
+  <label>AI key (Anthropic)<input id="sKey" type="password" placeholder="sk-ant-..." autocomplete="off"></label>
+  <p>The key lets the page pick the parts out of each conversation. Without it, conversations are still saved as text, just not sorted into lost sales.</p>
+  <div class="warnbox">The key and the log stay on this computer only. Use a key with a low monthly spending limit.</div>
+  <div class="actions"><button class="solid" id="saveSet">Save</button><button class="ghost" id="closeSet">Cancel</button></div>
+</dialog>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+             set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let log=store.get("ls_log",[]);           // [{id, ts, transcript, items:[{item,fits,outcome,note}], analyzed}]
+let cfg=store.get("ls_cfg",{name:"",key:""});
+const save=()=>store.set("ls_log",log);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dayKey=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+const timeStr=ts=>new Date(ts).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+
+function applyCfg(){ $("storeName").textContent=cfg.name?cfg.name+" · Lost Sales":"Lost Sales Recorder"; }
+applyCfg();
+$("day").value=dayKey(Date.now());
+
+/* ---------- speech ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null, recording=false, finalText="", interim="", t0=0, tick=null;
+
+function setStatus(s){$("status").textContent=s}
+function showLive(){ $("live").textContent=(finalText+interim).trim()||"Listening…"; $("live").scrollTop=1e9; }
+
+function startRec(){
+  if(!SR){ setStatus("This browser can't listen. Use Chrome or Edge, or type below."); return; }
+  finalText=""; interim="";
+  rec=new SR(); rec.continuous=true; rec.interimResults=true; rec.lang="en-US";
+  rec.onresult=e=>{ interim="";
+    for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i];
+      if(r.isFinal) finalText+=r[0].transcript.trim()+"\n"; else interim+=r[0].transcript; }
+    showLive(); };
+  rec.onerror=e=>{ if(e.error==="not-allowed"||e.error==="service-not-allowed"){ recording=false; uiIdle();
+      setStatus("The microphone is blocked. Click the lock icon by the web address and allow the microphone."); } };
+  rec.onend=()=>{ if(recording){ try{rec.start()}catch(e){} } };   // keeps listening through pauses
+  try{ rec.start(); }catch(e){ setStatus("Couldn't start the microphone."); return; }
+  recording=true; t0=Date.now();
+  $("recBtn").classList.add("on"); $("recBtn").setAttribute("aria-pressed","true"); $("recLabel").textContent="Stop";
+  setStatus("Recording this customer"); showLive();
+  tick=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$("timer").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")},500);
+}
+function uiIdle(){ clearInterval(tick); $("recBtn").classList.remove("on"); $("recBtn").setAttribute("aria-pressed","false"); $("recLabel").textContent="Record"; $("timer").textContent="00:00"; }
+function stopRec(){
+  recording=false; try{rec&&rec.stop()}catch(e){}
+  uiIdle();
+  setTimeout(()=>{ const text=(finalText+interim).trim();
+    if(!text){ setStatus("Nothing was heard. Ready for the next customer."); return; }
+    handle(text); },600);
+}
+$("recBtn").onclick=()=>recording?stopRec():startRec();
+$("typedBtn").onclick=()=>{ const t=$("typed").value.trim(); if(!t) return; $("typed").value=""; handle(t); };
+
+/* ---------- AI extraction ---------- */
+const PROMPT=`You read transcripts of conversations at the parts counter of a powersports dealer (motorcycles, dirt bikes, ATVs, UTVs, snowmobiles).
+List every part, accessory, tire or gear item the customer asked about, and how it ended.
+outcome must be one of: "walked" (store didn't have it and the customer left without buying or ordering it), "ordered" (store will order it for them), "sold" (customer bought it today).
+Ignore small talk. If no items were asked about, return an empty list.
+Reply with JSON only, no other text: {"items":[{"item":"brand + product + size if said","fits":"year make model if said, else empty","outcome":"walked","note":"under 12 words"}]}`;
+
+async function extract(text){
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+    headers:{"content-type":"application/json","x-api-key":cfg.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:800,system:PROMPT,messages:[{role:"user",content:"Transcript:\n"+text}]})});
+  if(!r.ok){ const b=await r.text(); throw new Error(r.status===401?"The AI key was rejected. Check it in Settings.":"AI error "+r.status+": "+b.slice(0,120)); }
+  const j=await r.json(); const out=(j.content||[]).map(c=>c.text||"").join("");
+  const m=out.match(/\{[\s\S]*\}/); const data=JSON.parse(m?m[0]:out);
+  return (data.items||[]).filter(x=>x&&x.item).map(x=>({item:String(x.item),fits:String(x.fits||""),outcome:["walked","ordered","sold"].includes(x.outcome)?x.outcome:"walked",note:String(x.note||"")}));
+}
+
+async function handle(text){
+  const entry={id:Date.now()+"",ts:Date.now(),transcript:text,items:[],analyzed:false};
+  log.push(entry); save();
+  if(!cfg.key){ entry.items=[]; showResult(entry,"Saved as text. Add an AI key in Settings to sort it into lost sales."); render(); return; }
+  setStatus("Reading the conversation…");
+  try{ entry.items=await extract(text); entry.analyzed=true; save();
+       showResult(entry, entry.items.length?"":"No parts were asked about."); }
+  catch(e){ showResult(entry,e.message); }
+  setStatus("Ready for the next customer"); render();
+}
+
+function itemHTML(x){ return `<div class="result ${x.outcome}"><div><span class="chip ${x.outcome}">${x.outcome}</span></div>
+  <div class="item">${esc(x.item)}</div><div class="meta">${esc([x.fits,x.note].filter(Boolean).join(" · "))}</div></div>`; }
+function showResult(entry,msg){
+  $("lastResult").innerHTML=(msg?`<div class="meta">${esc(msg)}</div>`:"")+entry.items.map(itemHTML).join("");
+  $("live").textContent="The conversation will appear here as it's heard.";
+}
+
+/* ---------- report ---------- */
+function render(){
+  const day=$("day").value; const todays=log.filter(e=>dayKey(e.ts)===day);
+  const items=todays.flatMap(e=>e.items.map(x=>({...x,ts:e.ts})));
+  const walked=items.filter(x=>x.outcome==="walked"), ordered=items.filter(x=>x.outcome==="ordered");
+  $("tWalk").textContent=walked.length; $("tOrder").textContent=ordered.length; $("tConv").textContent=todays.length;
+  $("walkRows").innerHTML=walked.length?walked.map(x=>`<tr><td>${esc(x.item)}${x.note?`<div class="meta">${esc(x.note)}</div>`:""}</td><td>${esc(x.fits)}</td><td class="meta">${timeStr(x.ts)}</td></tr>`).join("")
+    :`<tr><td colspan="3" class="empty">No walked sales logged for this day yet.</td></tr>`;
+  const since=new Date($("day").value+"T23:59:59").getTime(), from=since-30*864e5;
+  const counts={};
+  log.filter(e=>e.ts>=from&&e.ts<=since).forEach(e=>e.items.filter(x=>x.outcome!=="sold").forEach(x=>{
+    const k=x.item.toLowerCase().replace(/\s+/g," ").trim(); (counts[k]=counts[k]||{item:x.item,n:0}).n++; }));
+  const reps=Object.values(counts).filter(c=>c.n>1).sort((a,b)=>b.n-a.n);
+  $("repeatRows").innerHTML=reps.length?reps.map(c=>`<tr><td>${esc(c.item)}</td><td class="n">${c.n}</td></tr>`).join("")
+    :`<tr><td colspan="2" class="empty">Nothing asked for twice yet.</td></tr>`;
+  const unsorted=todays.filter(e=>!e.analyzed).length;
+  const lines=[`LOST SALES · ${cfg.name||"Store"} · ${new Date(day+"T12:00").toLocaleDateString([], {weekday:"short",month:"short",day:"numeric",year:"numeric"})}`,
+    `${todays.length} conversations · ${walked.length} walked · ${ordered.length} ordered`,"",
+    "WALKED OUT WITHOUT IT:",...(walked.length?walked.map(x=>`- ${x.item}${x.fits?" ("+x.fits+")":""}`):["- none"]),"",
+    "SPECIAL ORDERS:",...(ordered.length?ordered.map(x=>`- ${x.item}${x.fits?" ("+x.fits+")":""}`):["- none"]),"",
+    "ASKED FOR MORE THAN ONCE (30 DAYS):",...(reps.length?reps.map(c=>`- ${c.item}: ${c.n}x`):["- none"])];
+  if(unsorted) lines.push("",`${unsorted} conversation(s) saved as text only (no AI key).`);
+  $("reportText").value=lines.join("\n");
+}
+$("day").onchange=render;
+$("copyBtn").onclick=async()=>{ const t=$("reportText").value;
+  try{ await navigator.clipboard.writeText(t); $("copyBtn").textContent="Copied"; }
+  catch(e){ $("reportText").select(); $("copyBtn").textContent="Press Ctrl+C"; }
+  setTimeout(()=>$("copyBtn").textContent="Copy report",1800); };
+$("csvBtn").onclick=()=>{
+  const q=s=>'"'+String(s??"").replace(/"/g,'""')+'"';
+  const rows=[["date","time","item","fits","outcome","note","transcript"]];
+  log.forEach(e=>{ if(e.items.length) e.items.forEach(x=>rows.push([dayKey(e.ts),timeStr(e.ts),x.item,x.fits,x.outcome,x.note,e.transcript]));
+                   else rows.push([dayKey(e.ts),timeStr(e.ts),"","",e.analyzed?"none":"not sorted","",e.transcript]); });
+  const blob=new Blob([rows.map(r=>r.map(q).join(",")).join("\n")],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="lost-sales-"+dayKey(Date.now())+".csv"; a.click();
+};
+
+/* ---------- settings ---------- */
+$("setBtn").onclick=()=>{ $("sName").value=cfg.name; $("sKey").value=cfg.key; $("settings").showModal(); };
+$("closeSet").onclick=()=>$("settings").close();
+$("saveSet").onclick=()=>{ cfg={name:$("sName").value.trim(),key:$("sKey").value.trim()}; store.set("ls_cfg",cfg); applyCfg(); render(); $("settings").close(); };
+
+if(!SR) setStatus("This browser can't listen. Use Chrome or Edge, or type below.");
+render();
+})();
+</script>
+</body>
+</html>
